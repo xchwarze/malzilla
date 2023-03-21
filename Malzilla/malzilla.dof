@@ -94,7 +94,7 @@ OutputDir=bin
 UnitOutputDir=dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
-SearchPath=used_units
+SearchPath=used_units;zlibex
 Packages=vcl;rtl;vclx;DirectoryWatch;DirMonitor_dpk;DJcl;JvStdCtrlsD7R;JvAppFrmD7R;JvCoreD7R;JvBandsD7R;JvCmpD7R;JvCryptD7R;JvCtrlsD7R;JvCustomD7R;JvDlgsD7R;JvDockingD7R;JvDotNetCtrlsD7R;JvEDID7R;vclie;vcldb;qrpt;JvGlobusD7R;JvHMID7R;JvInspectorD7R;JvInterpreterD7R;JvJansD7R;JvManagedThreadsD7R;JvMMD7R;JvNetD7R;JvPageCompsD7R;JvPluginD7R;JvPrintPreviewD7R;JvSystemD7R;JvTimeFrameworkD7R;JvUIBD7R;JvValidatorsD7R;JvWizardD7R;JvXPCtrlsD7R;dbrtl;tdbf_d7r;tdbf_d7d;madBasic_;madDisAsm_;MPHexEditor_D7;DIZipWriter_D7;B305vr70;indy;DES;TntUnicodeVcl_R70;vclactnband;visualclx;ATBinHexD7;AID7Pack;inet;xmlrtl;inetdbbde;inetdbxpress;dsnap;dsnapcon;soaprtl;dbexpress;dbxcds;inetdb;bdertl;vcldbx;webdsnap;websnap;adortl;ibxpress;teeui;teedb;tee;dss;visualdbclx;JvBDED7R;JvDBD7R;nplug;SynEdit_R7_TNT;GeckoSDK;GeckoComponents;IEDcomp
 Conditionals=
 DebugSourceDirs=
@@ -113,7 +113,7 @@ RootDir=
 IncludeVerInfo=1
 AutoIncBuild=0
 MajorVer=1
-MinorVer=0
+MinorVer=1
 Release=0
 Build=0
 Debug=0
@@ -126,13 +126,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=MyCity
 FileDescription=
-FileVersion=1.0.0.0
+FileVersion=1.1.0.0
 InternalName=
 LegalCopyright=Boban Spasic
 LegalTrademarks=
 OriginalFilename=
 ProductName=
-ProductVersion=0.9.1
+ProductVersion=1.1.0.0
 Comments=
 [HistoryLists\hlConditionals]
 Count=1
@@ -141,8 +141,9 @@ Item0=USE_TNT_DESIGNTIME_SUPPORT
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
-Count=1
-Item0=used_units
+Count=2
+Item0=used_units;zlibex
+Item1=used_units
 [HistoryLists\hlUnitOutputDirectory]
 Count=1
 Item0=dcu

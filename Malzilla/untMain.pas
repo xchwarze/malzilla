@@ -50,7 +50,8 @@ uses
   IpUtils,
   uPSCompiler, RegExpr, SynTokenMatch, SynEditTypes, SynHighlighterWebData,
   SynHighlighterWebMisc, MD5, TntSysUtils, TntDialogs, JvExExtCtrls, JvRollOut,
-  Synautil, TntClasses, TntSystem, untJSBrowserProxy;
+  Synautil, TntClasses, TntSystem, untJSBrowserProxy, DosCommand,
+  SynEditMiscClasses, SynEditRegexSearch;
 
 type
 
@@ -460,6 +461,61 @@ type
     mnuRemovewhitespaceall1: TMenuItem;
     rbPreDelim: TRadioButton;
     rbPostdelim: TRadioButton;
+    tsMiscText: TTntTabSheet;
+    tsMixHex: TTntTabSheet;
+    MPHexEditor3: TMPHexEditor;
+    Panel4: TPanel;
+    cbMiscHexUnicode: TTntCheckBox;
+    cbMiscHexUnicodeBigEndian: TTntCheckBox;
+    cbMiscHexSwapNibbles: TTntCheckBox;
+    PageControl6: TTntPageControl;
+    tsKalimeroProcessor: TTntTabSheet;
+    Panel6: TPanel;
+    Panel9: TPanel;
+    mmKalimero: TSynMemo;
+    Panel10: TPanel;
+    Splitter8: TSplitter;
+    sgKalimeroArray: TStringGrid;
+    btKalimeroStep1: TTntButton;
+    btKalimeroStep2: TTntButton;
+    tsLibEmu: TTntTabSheet;
+    Panel30: TPanel;
+    Panel31: TPanel;
+    Panel34: TPanel;
+    Splitter9: TSplitter;
+    btRunLibEmu: TTntButton;
+    emulator: TDosCommand;
+    mmLibEmuOutput: TMemo;
+    btLibEmuAbort: TButton;
+    hexLibEmuInput: TMPHexEditor;
+    cbLibEmuGetPC: TTntCheckBox;
+    edKalimeroRegEx: TTntEdit;
+    edKalimeroReplace: TTntEdit;
+    cbKalimeroEscapeCorrection: TTntCheckBox;
+    cbCaseSensitive: TTntCheckBox;
+    cbCaseSensitive2: TTntCheckBox;
+    edXOR: TTntEdit;
+    btXOR: TTntButton;
+    TntLabel1: TTntLabel;
+    TntPanel2: TTntPanel;
+    mmXORStrings: TTntMemo;
+    TntLabel4: TTntLabel;
+    TntLabel5: TTntLabel;
+    btBFXOR: TTntButton;
+    TntLabel6: TTntLabel;
+    edXORKey: TTntEdit;
+    btApplyXor: TTntButton;
+    mnuHexCopyClipTextSel: TMenuItem;
+    mnuHexCopyClipHexSel: TMenuItem;
+    TntLabel7: TTntLabel;
+    edXORKeyMAX: TTntEdit;
+    lbXORString: TTntLabel;
+    lbXORKey: TTntLabel;
+    cbXORTurbo: TTntCheckBox;
+    Panel35: TPanel;
+    btHexDisasm: TTntButton;
+    mmDisasm: TSynMemo;
+    Splitter10: TSplitter;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btRunScriptClick(Sender: TObject);
@@ -622,6 +678,26 @@ type
     procedure edObfURLKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure mnuRemovewhitespaceall1Click(Sender: TObject);
+    procedure tbChange(Sender: TObject);
+    procedure cbMiscHexUnicodeClick(Sender: TObject);
+    procedure cbMiscHexUnicodeBigEndianClick(Sender: TObject);
+    procedure cbMiscHexSwapNibblesClick(Sender: TObject);
+    procedure btKalimeroStep1Click(Sender: TObject);
+    procedure btKalimeroStep2Click(Sender: TObject);
+    procedure btRunLibEmuClick(Sender: TObject);
+    procedure btLibEmuAbortClick(Sender: TObject);
+    procedure emulatorTerminated(Sender: TObject; ExitCode: Cardinal);
+    procedure edXORKeyPress(Sender: TObject; var Key: Char);
+    procedure btXORClick(Sender: TObject);
+    procedure btBFXORClick(Sender: TObject);
+    procedure edXORKeyKeyPress(Sender: TObject; var Key: Char);
+    procedure btApplyXorClick(Sender: TObject);
+    procedure mnuHexCopyClipTextSelClick(Sender: TObject);
+    procedure mnuHexCopyClipHexSelClick(Sender: TObject);
+    procedure edXORKeyMAXKeyPress(Sender: TObject; var Key: Char);
+    procedure btHexDisasmClick(Sender: TObject);
+    procedure mmDisasmGutterGetText(Sender: TObject; aLine: Integer;
+      var aText: WideString);
 
   private
     { Private declarations }
@@ -647,6 +723,7 @@ type
     procedure UpdateDecoderTab(i: Integer);
     procedure ShowDecoderTab(i: Integer);
     procedure DeleteDecoderTab(i: Integer);
+    function FixURLline(input: string): string;
     function parseTemplate(s: WideString): WideString;
 
   public
@@ -664,9 +741,12 @@ var
   cacheMD5: TStringList;
   cacheURL: TStringList;
   cacheDate: TStringList;
+  cacheOther: TStringList;
   cacheMD5Current: string;
   cacheURLCurrent: string;
   cacheDateCurrent: string;
+  cacheOtherCurrent: string;
+  cacheOtherReferrerCurrent: string;
   script_pos: integer;
   script_pos_object: Integer;
   downloaded: int64;
@@ -682,7 +762,7 @@ var
   bufSlot4: WideString;
   bufSlot5: WideString;
   cookiesList: TStringList;
-  language: string;
+  //language: string;
   MyDownloaderTab: TDownloaderTab;
   deletingDownloaderTabAction: Boolean;
   deletingDecoderTabAction: Boolean;
@@ -692,6 +772,8 @@ var
   DecoderTabNr: Integer;
   Busy: Boolean;
   redirectionURL: string;
+  opcodeSize: array of Integer;
+  opcodeCounter: Integer;
 
 implementation
 
@@ -699,11 +781,13 @@ implementation
 
 uses untDownloadThread, untListDownloaderThread, untCacheList,
   untHTMLObjects, untEvalResults,
-  untDelimiterDlg, untMiniHTMLView, untFTPThread;
+  untDelimiterDlg, untMiniHTMLView, untFTPThread, DisAsm32;
 
 {$I incFunctions.inc}
+{$I incAlphaDec.Inc}
 {$I incPasScriptFunctions.Inc}
 {$I incMessages.inc}
+{$I incXOR.Inc}
 
 constructor TDownloaderTab.Create;
 begin
@@ -1035,7 +1119,6 @@ var
   s1: TStringList;
   //i: Integer;
 begin
-  mmResult.Lines.EndUpdate;
   mmResult.WordWrap := True;
   if compiled then
   begin
@@ -1176,7 +1259,10 @@ begin
   else
     stbrHTTP.SimpleText := IntToStr(status) + ' ' + strStatus;
   if cbAutoReferrer.Checked then
+  begin
+    cacheOtherReferrerCurrent := edReferrer.Text;
     edReferrer.Text := edURL.Text;
+  end;
 end;
 
 procedure TfrmMain.Flash;
@@ -1255,6 +1341,13 @@ begin
         '*.misc|*.misc|*.*|*.*');
       OpenDialog2.FilterIndex := 0;
     end;
+    if cpnName = 'mmKalimero' then
+    begin
+      OpenDialog2.InitialDir := Ini.ReadString('mmKalimero', 'dir', '');
+      OpenDialog2.Filter := Ini.ReadString('mmKalimero', 'Filter',
+        '*.htm|*.htm|*.html|*.html|*.*|*.*');
+      OpenDialog2.FilterIndex := 0;
+    end;
     if cpnName = 'mmNotes' then
     begin
       OpenDialog2.InitialDir := Ini.ReadString('mmNotes', 'dir', '');
@@ -1324,6 +1417,12 @@ begin
     begin
       Ini.WriteString('mmMiscDec', 'dir', ExtractFileDir(OpenDialog2.FileName));
       Ini.WriteString('mmMiscDec', 'Filter', OpenDialog2.Filter);
+    end;
+    if cpnName = 'mmKalimero' then
+    begin
+      Ini.WriteString('mmKalimero', 'dir',
+        ExtractFileDir(OpenDialog2.FileName));
+      Ini.WriteString('mmKalimero', 'Filter', OpenDialog2.Filter);
     end;
     if cpnName = 'mmNotes' then
     begin
@@ -1407,6 +1506,14 @@ begin
       SaveDialog1.FilterIndex := 0;
       SaveDialog1.DefaultExt := 'misc';
     end;
+    if cpnName = 'mmKalimero' then
+    begin
+      SaveDialog1.InitialDir := Ini.ReadString('mmKalimeroS', 'dir', '');
+      SaveDialog1.Filter := Ini.ReadString('mmKalimeroS', 'Filter',
+        '*.htm|*.htm|*.html|*.html|*.*|*.*');
+      SaveDialog1.FilterIndex := 0;
+      SaveDialog1.DefaultExt := 'html';
+    end;
     if cpnName = 'mmNotes' then
     begin
       SaveDialog1.InitialDir := Ini.ReadString('mmNotesS', 'dir', '');
@@ -1484,6 +1591,12 @@ begin
       Ini.WriteString('mmMiscDecS', 'dir',
         ExtractFileDir(SaveDialog1.FileName));
       Ini.WriteString('mmMiscDecS', 'Filter', SaveDialog1.Filter);
+    end;
+    if cpnName = 'mmKalimero' then
+    begin
+      Ini.WriteString('mmKalimeroS', 'dir',
+        ExtractFileDir(SaveDialog1.FileName));
+      Ini.WriteString('mmKalimeroS', 'Filter', SaveDialog1.Filter);
     end;
     if cpnName = 'mmNotes' then
     begin
@@ -1566,8 +1679,20 @@ begin
 end;
 
 procedure TfrmMain.ParseCookies;
+var
+  i: Integer;
+  c: string;
 begin
+  c := '';
   mmCookies.Lines.AddStrings(cookiesList);
+  for i := 0 to cookiesList.Count - 1 do
+    c := c + cookiesList[i] + ';';
+  cacheOtherCurrent := cacheMD5Current + '**' + edURL.Text + '**' +
+    DateTimeToStr(Now)
+    + '**' + comboUserAgent.Text + '**' + cacheOtherReferrerCurrent + '**' + c;
+  cacheOther.Add(cacheOtherCurrent);
+  cacheOther.SaveToFile(ExtractFilePath(application.exename) +
+    'CacheOther.dat');
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -1575,13 +1700,28 @@ var
   Ini: TIniFile;
   i: integer;
   a: string;
+  emu_present: Boolean;
 begin
-  InstallTntSystemUpdates;
+  //InstallTntSystemUpdates;
   //create folders
   a := ExtractFilePath(Application.ExeName);
   ForceDirectories(a + '\eval_temp');
   ForceDirectories(a + '\decoder_cache');
   ForceDirectories(a + '\cache');
+
+  //emu_present
+  emu_present := True;
+  if not (FileExists(ExtractFileDir(Application.ExeName) +
+    '\libemu\cygemu-2.dll')) then
+    emu_present := False;
+  if not (FileExists(ExtractFileDir(Application.ExeName) +
+    '\libemu\cygwin1.dll')) then
+    emu_present := False;
+  if not (FileExists(ExtractFileDir(Application.ExeName) + '\libemu\sctest.exe'))
+    then
+    emu_present := False;
+  if not emu_present then
+    tsLibEmu.TabVisible := False;
 
   if Win32Platform = VER_PLATFORM_WIN32_NT then
     Font.Name := 'MS Shell Dlg 2'
@@ -1632,7 +1772,7 @@ begin
     mmScript.Highlighter.Enabled := cbHighlight.Checked;
     mmResult.Highlighter.Enabled := cbHighlight.Checked;
     mmBrowser.Highlighter.Enabled := cbHighlight.Checked;
-    language := Ini.ReadString('Display', 'Language', '');
+    //language := Ini.ReadString('Display', 'Language', '');
     if mnuTrayClipMonitorList.Checked then
     begin
       hkClipboardMonitor1.Enabled := true;
@@ -1661,14 +1801,19 @@ begin
   comboUserAgent.Items := mmUserAgentsEditor.Lines;
   find_pos := 0;
   find_pos2 := 0;
+  opcodeCounter := 0;
+  SetLength(opcodeSize, 0);
+  SetLength(opcodeSize, 1);
   cancelOP := False;
   script_pos := 0;
   script_pos_object := 0;
   cacheMD5 := TStringList.Create;
   cacheURL := TStringLIst.Create;
   cacheDate := TStringList.Create;
+  cacheOther := TStringList.Create;
   cacheURL.CaseSensitive := false;
   cacheMD5.CaseSensitive := false;
+  cacheOther.CaseSensitive := False;
   if FileExists(ExtractFilePath(application.exename) + 'CacheMD5.dat') then
   begin
     cacheMD5.LoadFromFile(ExtractFilePath(application.exename) +
@@ -1679,6 +1824,9 @@ begin
     if FileExists(ExtractFilePath(application.exename) + 'CacheDate.dat') then
       cacheDate.LoadFromFile(ExtractFilePath(application.exename) +
         'CacheDate.dat');
+    if FileExists(ExtractFilePath(application.exename) + 'CacheOther.dat') then
+      cacheOther.LoadFromFile(ExtractFilePath(application.exename) +
+        'CacheOther.dat');
   end;
   //create TTntEdit for editing listboxes
   LisTTntEdit := TTntEdit.Create(self);
@@ -1699,66 +1847,36 @@ begin
   AddDecoderTab;
   deletingDownloaderTabAction := False;
   deletingDecoderTabAction := False;
+  //cmd arguments
+  if ParamCount > 1 then
+  begin
+    if LowerCase(ParamStr(1)) = '-url' then
+    begin
+      edURL.Text := FixURLLine(ParamStr(2));
+    end
+    else if LowerCase(ParamStr(1)) = '-html' then
+    begin
+      if FileExists(ParamStr(2)) then
+        mmBrowser.Lines.LoadFromFile(ParamStr(2));
+    end
+    else if LowerCase(ParamStr(1)) = '-js' then
+    begin
+      if FileExists(ParamStr(2)) then
+        mmScript.Lines.LoadFromFile(ParamStr(2));
+      PageControl1.ActivePage := tsDecoder;
+    end
+    else
+      ShowMessage('Wrong arguments passed' + #13#10 + ParamStr(1) + #13#10 +
+        ParamStr(2));
+  end;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
-var
-  Ini: TIniFile;
 begin
-  if not Busy then
-  begin
-    edURL.Items.SaveToFile(ExtractFilePath(application.exename) +
-      'URL_history.txt');
-    mmUserAgentsEditor.Lines.SaveToFile(ExtractFilePath(application.exename) +
-      'User_agents.txt');
-    mmClipMonTrig.Lines.SaveToFile(ExtractFilePath(application.exename) +
-      'HTTP_triggers.txt');
-    Ini := TIniFile.Create(ExtractFilePath(application.exename) +
-      'Settings.txt');
-    try
-      Ini.WriteBool('Downloader', 'UseUserAgent', cbUserAgent.Checked);
-      Ini.WriteString('Downloader', 'UserAgentString', comboUserAgent.Text);
-      Ini.WriteBool('Downloader', 'UseProxy', cbUseProxy.Checked);
-      Ini.WriteBool('Downloader', 'UseCookies', cbUseCookies.Checked);
-      Ini.WriteBool('Downloader', 'UseReferrer', cbUseReferrer.Checked);
-      Ini.WriteBool('Downloader', 'AutoRedirect', cbAutoRedirect.Checked);
-      Ini.WriteBool('Downloader', 'AutoReferrer', cbAutoReferrer.Checked);
-      Ini.WriteBool('Downloader', 'AutoParseLinks',
-        cbAutoParseLinksOnGET.Checked);
-      Ini.WriteBool('Downloader', 'SaveAsProject', cbMalzillaProject.Checked);
-      Ini.WriteBool('Downloader', 'AutoComplete', cbAutoCompleteURL.Checked);
-      Ini.WriteBool('Downloader', 'URLHistory', cbURLHistory.Checked);
-      Ini.WriteBool('Proxy', 'Hidden', cbHideProxyData.Checked);
-      Ini.WriteString('Proxy', 'Address', edProxyAddress.Text);
-      Ini.WriteString('Proxy', 'Port', edProxyPort.Text);
-      if not cbHideProxyData.Checked then
-      begin
-        Ini.WriteString('Proxy', 'User', edProxyUser.Text);
-        Ini.WriteString('Proxy', 'Pass', edProxyPass.Text);
-      end;
-      Ini.WriteBool('Monitor', 'Multi', mnuTrayClipMonitorList.Checked);
-      Ini.WriteBool('Misc', 'ClearClipboard', cbClipBoardClear.Checked);
-      Ini.WriteBool('Misc', 'ClearCache', cbClearCacheOnExit.Checked);
-      Ini.WriteBool('Misc', 'ClearHistory', cbClearHistoryOnExit.Checked);
-      Ini.WriteBool('Decoder', 'ReplaceEval', cbReplaceEval.Checked);
-      Ini.WriteString('Decoder', 'ReplaceEvalWith', edReplaceEval.Text);
-      Ini.WriteBool('Decoder', 'OverrideEval', cbOverrideEval.Checked);
-      Ini.WriteBool('Decoder', 'AutoReplaceEval', cbDontBotherMe.Checked);
-      Ini.WriteBool('Display', 'Highlight', cbHighlight.Checked);
-      Ini.WriteString('Display', 'FontName', frmMain.Font.Name);
-      Ini.WriteInteger('Display', 'FontSize', frmMain.Font.Size);
-      Ini.WriteBool('Display', 'AutoFocusDecoder', cbAutoFocusDecoder.Checked);
-    finally
-      Ini.Free;
-    end;
-    cacheMD5.SaveToFile(ExtractFilePath(application.exename) + 'CacheMD5.dat');
-    cacheURL.SaveToFile(ExtractFilePath(application.exename) + 'CacheURL.dat');
-    cacheDate.SaveToFile(ExtractFilePath(application.exename) +
-      'CacheDate.dat');
-  end;
   cacheMD5.Free;
   cacheURL.Free;
   cacheDate.Free;
+  cacheOther.Free;
   LisTTntEdit.Free;
   cookiesList.Free;
   DownloaderTabList.Free;
@@ -1784,13 +1902,19 @@ var
   //DecoderThread: TJSBrowserProxy;           //premestam u globalne varijable
   script_buff: WideString;
 begin
-  Busy := True;
-  mmResult.Lines.BeginUpdate;
-  mmResult.WordWrap := False;
-  btRunScript.Enabled := False;
-  btDebug.Enabled := False;
   if mmScript.Text <> '' then
   begin
+    Busy := True;
+    mmResult.Lines.BeginUpdate;
+    mmScript.Lines.BeginUpdate;
+    //mmResult.Enabled := False;
+    //mmScript.Enabled := False;
+    mmResult.Visible := False;
+    mmScript.Visible := False;
+    mmResult.WordWrap := False;
+    btRunScript.Enabled := False;
+    btDebug.Enabled := False;
+
     AddToLog('====================', nil);
     AddToLog('Decoder:', nil);
     if pos('arguments.callee.toString(', mmScript.Text) > 0 then
@@ -2001,9 +2125,10 @@ begin
       j1 := posEx('</script>', LowerCase(mmBrowser.Text), i1) - i1 - 1;
       if j1 > 0 then
       begin
-        if Trim(Copy(mmBrowser.Text, i1, j1 - i1)) <> '' then
+        if Trim(Copy(mmBrowser.Text, i1, j1)) <> '' then
           mmBrowser.SelLength := j1;
         script_pos := j1 + i1;
+        //ShowMessage(IntToStr(i1) + ' : ' + IntToStr(j1));  //debug
       end
       else
       begin
@@ -2066,7 +2191,8 @@ end;
 procedure TfrmMain.btDecodeDecClick(Sender: TObject);
 begin
   if edDelimiter.Text <> '' then
-    mmMiscDec.Text := dec2str(trim(mmMiscDec.Text), edDelimiter.Text, rbPreDelim.Checked)
+    mmMiscDec.Text := dec2str(trim(mmMiscDec.Text), edDelimiter.Text,
+      rbPreDelim.Checked)
   else
     mmMiscDec.Text := dec2str(trim(mmMiscDec.Text), ',', rbPreDelim.Checked)
 end;
@@ -2074,7 +2200,8 @@ end;
 procedure TfrmMain.btDecodeHexClick(Sender: TObject);
 begin
   if edDelimiter.Text <> '' then
-    mmMiscDec.Text := hex2str2(trim(mmMiscDec.Text), edDelimiter.Text, rbPreDelim.Checked)
+    mmMiscDec.Text := hex2str2(trim(mmMiscDec.Text), edDelimiter.Text,
+      rbPreDelim.Checked)
   else
     mmMiscDec.Text := hex2str2(trim(mmMiscDec.Text), '%', rbPreDelim.Checked)
 end;
@@ -2082,7 +2209,8 @@ end;
 procedure TfrmMain.btDecodeUCS2Click(Sender: TObject);
 begin
   if edDelimiter.Text <> '' then
-    mmMiscDec.Text := uni2str(trim(mmMiscDec.Text), edDelimiter.Text, rbPreDelim.Checked)
+    mmMiscDec.Text := uni2str(trim(mmMiscDec.Text), edDelimiter.Text,
+      rbPreDelim.Checked)
   else
     mmMiscDec.Text := uni2str(trim(mmMiscDec.Text), '%u', rbPreDelim.Checked)
 end;
@@ -2369,22 +2497,23 @@ end;
 
 procedure TfrmMain.mnuHexCopyClipTextClick(Sender: TObject);
 begin
-  Clipboard.AsText := MPHexEditor1.AsText;
+  Clipboard.AsText := TMPHexEditor(PopUpMnuHex.PopupComponent).AsText;
 end;
 
 procedure TfrmMain.mnuHexCopyClipHexClick(Sender: TObject);
 begin
-  Clipboard.AsText := MPHexEditor1.AsHex;
+  Clipboard.AsText := TMPHexEditor(PopUpMnuHex.PopupComponent).AsHex;
 end;
 
 procedure TfrmMain.mnuHexPasteClipTextClick(Sender: TObject);
 begin
-  MPHexEditor1.AsText := Clipboard.AsText;
+  TMPHexEditor(PopUpMnuHex.PopupComponent).AsText := Clipboard.AsText;
+  //MPHexEditor1.AsText := Clipboard.AsText;
 end;
 
 procedure TfrmMain.mnuHexPasteClipHexClick(Sender: TObject);
 begin
-  MPHexEditor1.AsHex := Clipboard.AsText;
+  TMPHexEditor(PopUpMnuHex.PopupComponent).AsHex := Clipboard.AsText;
 end;
 
 procedure TfrmMain.btClearURLHistClick(Sender: TObject);
@@ -2397,13 +2526,13 @@ begin
   SaveDialog1.FileName := 'Hex_view_file.bin';
   SaveDialog1.DefaultExt := 'bin';
   if SaveDialog1.Execute then
-    MPHexEditor1.SaveToFile(SaveDialog1.FileName);
+    TMPHexEditor(PopUpMnuHex.PopupComponent).SaveToFile(SaveDialog1.FileName);
 end;
 
 procedure TfrmMain.mnuHexLoadClick(Sender: TObject);
 begin
   if OpenDialog2.Execute then
-    MPHexEditor1.LoadFromFile(OpenDialog2.FileName);
+    TMPHexEditor(PopUpMnuHex.PopupComponent).LoadFromFile(OpenDialog2.FileName);
 end;
 
 procedure TfrmMain.mnuClearClick(Sender: TObject);
@@ -2559,8 +2688,11 @@ var
 begin
   if length(edFind.Text) > 0 then
   begin
-    found := posEx(LowerCase(edFind.Text), LowerCase(mmBrowser.Text), find_pos +
-      1);
+    if cbCaseSensitive.Checked then
+      found := PosEx(edFind.Text, mmBrowser.Text, find_pos + 1)
+    else
+      found := posEx(LowerCase(edFind.Text), LowerCase(mmBrowser.Text), find_pos
+        + 1);
     if found > 0 then
     begin
       mmBrowser.SelStart := found - 1;
@@ -2727,9 +2859,12 @@ begin
   cacheMD5.Clear;
   cacheURL.Clear;
   cacheDate.Clear;
+  cacheOther.Clear;
   cacheMD5.SaveToFile(ExtractFilePath(application.exename) + 'CacheMD5.dat');
   cacheURL.SaveToFile(ExtractFilePath(application.exename) + 'CacheURL.dat');
   cacheDate.SaveToFile(ExtractFilePath(application.exename) + 'CacheDate.dat');
+  cacheOther.SaveToFile(ExtractFilePath(application.exename) +
+    'CacheOther.dat');
   sl := TStringList.Create;
   try
     FindFiles(ExtractFilePath(application.exename) + 'Cache\', faDirectory or
@@ -2756,7 +2891,7 @@ begin
   if not ((cacheURL.Count = cacheMD5.Count) and (cacheMD5.Count =
     cacheDate.Count)) then
   begin
-    WideShowMessage('Cache is corrupted. Please save your files and clear the cache');
+    WideShowMessage('Cache index is corrupted. Please save your files and clear the cache');
     PageControl1.ActivePage := tsSettings;
     btClearCache.SetFocus;
   end;
@@ -3096,11 +3231,72 @@ begin
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+var
+  Ini: TIniFile;
 begin
-  if cbClearCacheOnExit.Checked then
-    btClearCache.Click;
-  if cbClearHistoryOnExit.Checked then
-    btClearURLHist.Click;
+  if not Busy then
+  begin
+    if cbClearCacheOnExit.Checked then
+      btClearCache.Click;
+    if cbClearHistoryOnExit.Checked then
+      btClearURLHist.Click;
+    edURL.Items.SaveToFile(ExtractFilePath(application.exename) +
+      'URL_history.txt');
+    mmUserAgentsEditor.Lines.SaveToFile(ExtractFilePath(application.exename) +
+      'User_agents.txt');
+    mmClipMonTrig.Lines.SaveToFile(ExtractFilePath(application.exename) +
+      'HTTP_triggers.txt');
+    Ini := TIniFile.Create(ExtractFilePath(application.exename) +
+      'Settings.txt');
+    try
+      Ini.WriteBool('Downloader', 'UseUserAgent', cbUserAgent.Checked);
+      Ini.WriteString('Downloader', 'UserAgentString', comboUserAgent.Text);
+      Ini.WriteBool('Downloader', 'UseProxy', cbUseProxy.Checked);
+      Ini.WriteBool('Downloader', 'UseCookies', cbUseCookies.Checked);
+      Ini.WriteBool('Downloader', 'UseReferrer', cbUseReferrer.Checked);
+      Ini.WriteBool('Downloader', 'AutoRedirect', cbAutoRedirect.Checked);
+      Ini.WriteBool('Downloader', 'AutoReferrer', cbAutoReferrer.Checked);
+      Ini.WriteBool('Downloader', 'AutoParseLinks',
+        cbAutoParseLinksOnGET.Checked);
+      Ini.WriteBool('Downloader', 'SaveAsProject', cbMalzillaProject.Checked);
+      Ini.WriteBool('Downloader', 'AutoComplete', cbAutoCompleteURL.Checked);
+      Ini.WriteBool('Downloader', 'URLHistory', cbURLHistory.Checked);
+      Ini.WriteBool('Proxy', 'Hidden', cbHideProxyData.Checked);
+      Ini.WriteString('Proxy', 'Address', edProxyAddress.Text);
+      Ini.WriteString('Proxy', 'Port', edProxyPort.Text);
+      if not cbHideProxyData.Checked then
+      begin
+        Ini.WriteString('Proxy', 'User', edProxyUser.Text);
+        Ini.WriteString('Proxy', 'Pass', edProxyPass.Text);
+      end;
+      Ini.WriteBool('Monitor', 'Multi', mnuTrayClipMonitorList.Checked);
+      Ini.WriteBool('Misc', 'ClearClipboard', cbClipBoardClear.Checked);
+      Ini.WriteBool('Misc', 'ClearCache', cbClearCacheOnExit.Checked);
+      Ini.WriteBool('Misc', 'ClearHistory', cbClearHistoryOnExit.Checked);
+      Ini.WriteBool('Decoder', 'ReplaceEval', cbReplaceEval.Checked);
+      Ini.WriteString('Decoder', 'ReplaceEvalWith', edReplaceEval.Text);
+      Ini.WriteBool('Decoder', 'OverrideEval', cbOverrideEval.Checked);
+      Ini.WriteBool('Decoder', 'AutoReplaceEval', cbDontBotherMe.Checked);
+      Ini.WriteBool('Display', 'Highlight', cbHighlight.Checked);
+      Ini.WriteString('Display', 'FontName', frmMain.Font.Name);
+      Ini.WriteInteger('Display', 'FontSize', frmMain.Font.Size);
+      Ini.WriteBool('Display', 'AutoFocusDecoder', cbAutoFocusDecoder.Checked);
+    finally
+      Ini.Free;
+    end;
+    cacheMD5.SaveToFile(ExtractFilePath(application.exename) + 'CacheMD5.dat');
+    cacheURL.SaveToFile(ExtractFilePath(application.exename) + 'CacheURL.dat');
+    cacheDate.SaveToFile(ExtractFilePath(application.exename) +
+      'CacheDate.dat');
+    cacheOther.SaveToFile(ExtractFilePath(application.exename) +
+      'CacheOther.dat');
+  end
+  else
+  begin
+    if MessageDlg('Malzilla is busy' + #13#10 + 'Do you really want to quit?',
+      mtConfirmation, [mbOk, mbCancel], 0) = mrCancel then
+      CanClose := False;
+  end;
 end;
 
 procedure TfrmMain.btCheckUpdateClick(Sender: TObject);
@@ -3171,8 +3367,9 @@ var
   end;
 
 begin
-  if FPaintUpdating then
-    Exit;
+  if mmScript.Enabled then
+    if FPaintUpdating then
+      Exit;
   Editor := TSynEdit(Sender);
   if TransientType = ttBefore then
   begin
@@ -3228,8 +3425,11 @@ var
 begin
   if length(edFind2.Text) > 0 then
   begin
-    found := posEx(LowerCase(edFind2.Text), LowerCase(mmScript.Text), find_pos2
-      + 1);
+    if cbCaseSensitive2.Checked then
+      found := PosEx(edFind2.Text, mmScript.Text, find_pos2 + 1)
+    else
+      found := posEx(LowerCase(edFind2.Text), LowerCase(mmScript.Text), find_pos2
+        + 1);
     if found > 0 then
     begin
       mmScript.SelStart := found - 1;
@@ -3264,13 +3464,13 @@ var
   DecoderThread: TJSBrowserProxy;
   script_buff: WideString;
 begin
-  Busy := True;
-  mmResult.Lines.BeginUpdate;
-  mmResult.WordWrap := False;
-  btRunScript.Enabled := False;
-  btDebug.Enabled := False;
   if mmScript.Text <> '' then
   begin
+    Busy := True;
+    mmResult.Lines.BeginUpdate;
+    mmResult.WordWrap := False;
+    btRunScript.Enabled := False;
+    btDebug.Enabled := False;
     AddToLog('====================', nil);
     AddToLog('Decoder:', nil);
     if pos('arguments.callee.toString(', mmScript.Text) > 0 then
@@ -3393,16 +3593,16 @@ begin
   deletingDownloaderTabAction := False;
 end;
 
-procedure TfrmMain.edURLExit(Sender: TObject);
+function TfrmMain.FixURLline(input: string): string;
 var
   s: string;
 begin
-  if edURL.Text <> '' then
+  if input <> '' then
   begin
-    s := StringReplace(edURL.Text, 'hxxp://', 'http://', [rfReplaceAll,
+    s := StringReplace(input, 'hxxp://', 'http://', [rfReplaceAll,
       rfIgnoreCase]);
     s := StringReplace(s, 'fxp://', 'ftp://', [rfReplaceAll, rfIgnoreCase]);
-    edURL.Text := s;
+    result := s;
     s := StringReplace(s, 'http://', '', [rfReplaceAll, rfIgnoreCase]);
     s := StringReplace(s, 'ftp://', '', [rfReplaceAll, rfIgnoreCase]);
     s := StringReplace(s, 'https://', '', [rfReplaceAll,
@@ -3411,7 +3611,14 @@ begin
     if Pos('/', s) > 0 then
       s := Copy(s, 1, Pos('/', s) - 1);
     tbDownloaderTabs.Tabs[tbDownloaderTabs.TabIndex] := s;
-  end;
+  end
+  else
+    ShowMessage('debug');
+end;
+
+procedure TfrmMain.edURLExit(Sender: TObject);
+begin
+  edURL.Text := FixURLline(edURL.Text);
 end;
 
 procedure TfrmMain.mnuCloseDownloaderTabClick(Sender: TObject);
@@ -3776,6 +3983,7 @@ var
   quotCount: Integer;
   dblQuotCount: Integer;
   forLoop: Boolean;
+  temp: widestring;
 begin
   indent := 0;
   output := '';
@@ -3787,103 +3995,104 @@ begin
   for i := 1 to mmScript.Lines.Count - 1 do
     mmScript.Lines[i] := Trim(mmScript.Lines[i]);
 
-  for i := 1 to Length(mmScript.Text) do
+  temp := mmScript.Text;
+  for i := 1 to Length(temp) do
   begin
-    if mmScript.Text[i] = '''' then
+    if temp[i] = '''' then
       Inc(quotCount);
-    if mmScript.Text[i] = '"' then
+    if temp[i] = '"' then
       Inc(dblQuotCount);
 
-    if PosEx('for', mmScript.Text, i) = i then
+    if PosEx('for', temp, i) = i then
       forLoop := True;
-    if forLoop and (mmScript.Text[i] = ')') then
+    if forLoop and (temp[i] = ')') then
       forLoop := False;
 
     if (quotCount mod 2 = 0) and (dblQuotCount mod 2 = 0) then
-      if mmScript.Text[i] = '{' then
+      if temp[i] = '{' then
       begin
         if i <> 1 then
         begin
           begin
-            if (mmScript.Text[i + 1] <> #10)
-              and (mmScript.Text[i + 1] <> #13)
-              and (mmScript.Text[i + 2] <> #10)
-              and (mmScript.Text[i + 2] <> #13)
-              and (mmScript.Text[i - 1] <> #10)
-              and (mmScript.Text[i - 1] <> #13)
-              and (mmScript.Text[i - 2] <> #10)
-              and (mmScript.Text[i - 2] <> #13) then
+            if (temp[i + 1] <> #10)
+              and (temp[i + 1] <> #13)
+              and (temp[i + 2] <> #10)
+              and (temp[i + 2] <> #13)
+              and (temp[i - 1] <> #10)
+              and (temp[i - 1] <> #13)
+              and (temp[i - 2] <> #10)
+              and (temp[i - 2] <> #13) then
             begin
-              Output := Output + Copy(mmScript.Text, j, i - j) + #13#10 + '{' +
+              Output := Output + Copy(temp, j, i - j) + #13#10 + '{' +
                 #13#10;
               j := i + 1;
             end
-            else if (mmScript.Text[i - 1] <> #10)
-              and (mmScript.Text[i - 1] <> #13)
-              and (mmScript.Text[i - 2] <> #10)
-              and (mmScript.Text[i - 2] <> #13) then
+            else if (temp[i - 1] <> #10)
+              and (temp[i - 1] <> #13)
+              and (temp[i - 2] <> #10)
+              and (temp[i - 2] <> #13) then
             begin
-              Output := Output + Copy(mmScript.Text, j, i - j) + #13#10 + '{';
+              Output := Output + Copy(temp, j, i - j) + #13#10 + '{';
               j := i + 1;
             end
-            else if (mmScript.Text[i + 1] <> #10)
-              and (mmScript.Text[i + 1] <> #13)
-              and (mmScript.Text[i + 2] <> #10)
-              and (mmScript.Text[i + 2] <> #13) then
+            else if (temp[i + 1] <> #10)
+              and (temp[i + 1] <> #13)
+              and (temp[i + 2] <> #10)
+              and (temp[i + 2] <> #13) then
             begin
-              Output := Output + Copy(mmScript.Text, j, i - j) + '{' + #13#10;
+              Output := Output + Copy(temp, j, i - j) + '{' + #13#10;
               j := i + 1;
             end;
           end;
         end;
       end
-      else if mmScript.Text[i] = '}' then
+      else if temp[i] = '}' then
       begin
-        if i <> Length(mmScript.Text) then
+        if i <> Length(temp) then
         begin
-          if (mmScript.Text[i + 1] <> #10)
-            and (mmScript.Text[i + 1] <> #13)
-            and (mmScript.Text[i + 2] <> #10)
-            and (mmScript.Text[i + 2] <> #13)
-            and (mmScript.Text[i - 1] <> #10)
-            and (mmScript.Text[i - 1] <> #13)
-            and (mmScript.Text[i - 2] <> #10)
-            and (mmScript.Text[i - 2] <> #13) then
+          if (temp[i + 1] <> #10)
+            and (temp[i + 1] <> #13)
+            and (temp[i + 2] <> #10)
+            and (temp[i + 2] <> #13)
+            and (temp[i - 1] <> #10)
+            and (temp[i - 1] <> #13)
+            and (temp[i - 2] <> #10)
+            and (temp[i - 2] <> #13) then
           begin
-            Output := Output + Copy(mmScript.Text, j, i - j) + #13#10 + '}' +
+            Output := Output + Copy(temp, j, i - j) + #13#10 + '}' +
               #13#10;
             j := i + 1;
           end
-          else if (mmScript.Text[i - 1] <> #10)
-            and (mmScript.Text[i - 1] <> #13)
-            and (mmScript.Text[i - 2] <> #10)
-            and (mmScript.Text[i - 2] <> #13) then
+          else if (temp[i - 1] <> #10)
+            and (temp[i - 1] <> #13)
+            and (temp[i - 2] <> #10)
+            and (temp[i - 2] <> #13) then
           begin
-            Output := Output + Copy(mmScript.Text, j, i - j) + #13#10 + '}';
+            Output := Output + Copy(temp, j, i - j) + #13#10 + '}';
             j := i + 1;
           end
-          else if (mmScript.Text[i + 1] <> #10)
-            and (mmScript.Text[i + 1] <> #13)
-            and (mmScript.Text[i + 2] <> #10)
-            and (mmScript.Text[i + 2] <> #13) then
+          else if (temp[i + 1] <> #10)
+            and (temp[i + 1] <> #13)
+            and (temp[i + 2] <> #10)
+            and (temp[i + 2] <> #13) then
           begin
-            Output := Output + Copy(mmScript.Text, j, i - j) + '}' + #13#10;
+            Output := Output + Copy(temp, j, i - j) + '}' + #13#10;
             j := i + 1;
           end;
         end;
       end
-      else if (mmScript.Text[i] = ';') and (not forLoop) then
+      else if (temp[i] = ';') and (not forLoop) then
       begin
-        if (mmScript.Text[i + 1] <> #10) and (mmScript.Text[i + 1] <> #13)
+        if (temp[i + 1] <> #10) and (temp[i + 1] <> #13)
           //and (mmScript.Text[i - 1] <> '}')
-        and (mmScript.Text[i + 1] <> '}') then
+        and (temp[i + 1] <> '}') then
         begin
-          Output := Output + Copy(mmScript.Text, j, i - j) + ';' + #13#10;
+          Output := Output + Copy(temp, j, i - j) + ';' + #13#10;
           j := i + 1;
         end;
       end;
   end;
-  Output := output + Copy(mmScript.Text, j, Length(mmScript.Text));
+  Output := output + Copy(temp, j, Length(temp));
   mmScript.Clear;
   mmScript.Text := output;
   for i := 0 to mmScript.Lines.Count - 1 do
@@ -4663,6 +4872,328 @@ begin
       TSynMemo(PopUpMnu.PopupComponent).SelEnd,
       Length(TSynMemo(PopUpMnu.PopupComponent).Text));
   end;
+end;
+
+procedure TfrmMain.tbChange(Sender: TObject);
+var
+  outStream: TStringStream;
+begin
+  if mmMiscDec.Text = string(mmMiscDec.Text) then
+  begin
+    mmMiscDec.Lines.SaveUnicode := False;
+    MPHexEditor3.UnicodeChars := False;
+    cbMiscHexUnicode.Checked := False;
+  end
+  else
+  begin
+    mmMiscDec.Lines.SaveUnicode := True;
+    MPHexEditor3.UnicodeChars := True;
+    cbMiscHexUnicode.Checked := True;
+  end;
+  outStream := TStringStream.Create(mmMiscDec.Text);
+  MPHexEditor3.LoadFromStream(outStream);
+  outStream.Free;
+end;
+
+procedure TfrmMain.cbMiscHexUnicodeClick(Sender: TObject);
+begin
+  try
+    MPHexEditor3.UnicodeChars := cbMiscHexUnicode.Checked;
+  except
+    on e: exception do
+    begin
+      WideShowMessage('Odd-byte file size, cannot be Unicode');
+      cbMiscHexUnicode.Checked := MPHexEditor3.UnicodeChars;
+    end;
+  end;
+end;
+
+procedure TfrmMain.cbMiscHexUnicodeBigEndianClick(Sender: TObject);
+begin
+  MPHexEditor3.UnicodeBigEndian := cbMiscHexUnicodeBigEndian.Checked;
+end;
+
+procedure TfrmMain.cbMiscHexSwapNibblesClick(Sender: TObject);
+begin
+  MPHexEditor3.SwapNibbles := cbMiscHexSwapNibbles.Checked;
+end;
+
+procedure TfrmMain.btKalimeroStep1Click(Sender: TObject);
+var
+  i: Integer;
+begin
+  sgKalimeroArray.RowCount := 0;
+  KalimeroS1(mmKalimero.Text, edKalimeroRegEx.Text, sgKalimeroArray);
+  AutoSizeGrid(sgKalimeroArray);
+  i := 0;
+  while i < sgKalimeroArray.RowCount do
+  begin
+    if sgKalimeroArray.Cells[0, i] = '' then
+      sgKalimeroArray.RowCount := i
+    else
+      Inc(i);
+  end;
+end;
+
+procedure TfrmMain.btKalimeroStep2Click(Sender: TObject);
+var
+  i: Integer;
+  x: string;
+  y: string;
+begin
+  mmKalimero.Clear;
+  for i := 0 to sgKalimeroArray.RowCount - 1 do
+  begin
+    y := WideStringReplace(sgKalimeroArray.Cells[0, i], '"', '',
+      [rfReplaceAll]);
+    y := WideStringReplace(y, '''', '', [rfReplaceAll]);
+    x := WideStringReplace(edKalimeroReplace.Text, 'KalimeroName', y,
+      [rfReplaceAll]);
+    if cbKalimeroEscapeCorrection.Checked then
+      x := WideStringReplace(x, 'KalimeroValue',
+        EscapeCorrection(sgKalimeroArray.Cells[1, i]), [rfReplaceAll])
+    else
+      x := WideStringReplace(x, 'KalimeroValue', sgKalimeroArray.Cells[1, i],
+        [rfReplaceAll]);
+    mmKalimero.Lines.Add(x);
+  end;
+end;
+
+procedure TfrmMain.btRunLibEmuClick(Sender: TObject);
+var
+  libEmuPath: string;
+  s: string;
+begin
+  libEmuPath := ExtractFileDir(Application.ExeName) + '\libemu\';
+  if cbLibEmuGetPC.Checked then
+    s := '"' + libEmuPath + 'sctest.exe" -Sgs 1000000 < "' + libEmuPath +
+      'shellcode.dat" > "' + libEmuPath + 'output.log"'
+  else
+    s := '"' + libEmuPath + 'sctest.exe" -Ss 1000000 < "' + libEmuPath +
+      'shellcode.dat" > "' + libEmuPath + 'output.log"';
+  mmLibEmuOutput.Text := s;
+  mmLibEmuOutput.Lines.SaveToFile(libEmuPath + 'emulate.bat');
+  mmLibEmuOutput.Lines.Clear;
+  hexLibEmuInput.SaveToFile(libEmuPath + 'shellcode.dat');
+  emulator.CommandLine := '"' + libEmuPath + 'emulate.bat"';
+  emulator.Execute;
+end;
+
+procedure TfrmMain.btLibEmuAbortClick(Sender: TObject);
+begin
+  emulator.Stop;
+end;
+
+procedure TfrmMain.emulatorTerminated(Sender: TObject; ExitCode: Cardinal);
+begin
+  if FileExists(ExtractFileDir(Application.ExeName) + '\libemu\output.log') then
+    mmLibEmuOutput.Lines.LoadFromFile(ExtractFileDir(Application.ExeName) +
+      '\libemu\output.log');
+  if FileExists(ExtractFileDir(Application.ExeName) + '\libemu\emulate.bat')
+    then
+    DeleteFile(ExtractFileDir(Application.ExeName) + '\libemu\emulate.bat');
+  if FileExists(ExtractFileDir(Application.ExeName) + '\libemu\output.log') then
+    DeleteFile(ExtractFileDir(Application.ExeName) + '\libemu\output.log');
+  if FileExists(ExtractFileDir(Application.ExeName) + '\libemu\shellcode.dat')
+    then
+    DeleteFile(ExtractFileDir(Application.ExeName) + '\libemu\shellcode.dat');
+  mmLibEmuOutput.Lines.Add('');
+  mmLibEmuOutput.Lines.Add('Finished');
+end;
+
+procedure TfrmMain.edXORKeyPress(Sender: TObject; var Key: Char);
+begin
+  if not (Key in [#8, '0'..'9', 'A'..'F', 'a'..'f']) then
+    Key := #0;
+end;
+
+procedure TfrmMain.btXORClick(Sender: TObject);
+var
+  HexMap: string;
+  i: Integer;
+begin
+  i := 1;
+  HexMap := '';
+  while i <= Length(mmMiscDec.Text) do
+  begin
+    HexMap := HexMap + edXOR.Text;
+    Inc(i);
+  end;
+  mmMiscDec.Text := BFxorit(mmMiscDec.Text, HexMap);
+end;
+
+procedure TfrmMain.btBFXORClick(Sender: TObject);
+var
+  sourceStr: string;
+  findList: TStringList;
+  counter: Integer;
+  i: Integer;
+  j: Integer;
+  currentXOR: string;
+  maxXOR: string;
+  HexMap: string;
+  xored: string;
+begin
+  if btBFXOR.Caption = 'Cancel' then
+  begin
+    btBFXOR.Caption := 'Find';
+    cancelOP := True;
+  end
+  else
+  begin
+    if mmXORStrings.Text <> '' then
+    begin
+      btBFXOR.Caption := 'Cancel';
+      findList := TStringList.Create;
+      sourceStr := MPHexEditor1.AsHex;
+      for i := 0 to mmXORStrings.Lines.Count - 1 do
+        findList.Add(Str2Hex(mmXORStrings.Lines[i]));
+      if edXORKeyMAX.Text <> '' then
+        maxXOR := incHexStr(edXORKeyMAX.Text)
+      else
+        maxXOR := '0100';
+      counter := 0;
+      while counter < findList.Count do
+      begin
+        j := 1;
+        currentXOR := '00';
+        lbXORString.Caption := 'Current string: ' + mmXorStrings.Lines[counter];
+        Application.ProcessMessages;
+        while currentXOR <> maxXOR do
+        begin
+          {if not(cbXORTurbo.Checked) then
+          begin
+            lbXORKey.Caption := 'Current key: ' + currentXOR;
+            Application.ProcessMessages;
+          end;}
+          i := 1;
+          HexMap := '';
+          while i <= Length(sourceStr) do
+          begin
+            HexMap := HexMap + currentXor;
+            Inc(i);
+          end;
+          xored := BFxorit(sourceStr, HexMap);
+          if AnsiContainsText(xored, findList[counter]) then
+          begin
+            edXORKey.Text := currentXOR;
+            counter := findList.Count;
+            Break;
+          end;
+          currentXOR := incHexStr(currentXOR);
+          if j = 256 then
+          begin
+            lbXORKey.Caption := 'Current key: ' + currentXOR;
+            Application.ProcessMessages;
+            j := 0;
+          end;
+          Inc(j);
+          if cancelOP then
+          begin
+            counter := findList.Count;
+            Break;
+          end;
+        end;
+        Inc(counter);
+      end;
+      findList.Free;
+      ShowMessage('Finished');
+    end
+    else
+      ShowMessage('Enter strings to find, one per line');
+    cancelOP := False;
+    btBFXOR.Caption := 'Find';
+  end;
+end;
+
+procedure TfrmMain.edXORKeyKeyPress(Sender: TObject; var Key: Char);
+begin
+  if not (Key in [#8, '0'..'9', 'A'..'F', 'a'..'f']) then
+    Key := #0;
+end;
+
+procedure TfrmMain.btApplyXorClick(Sender: TObject);
+var
+  HexMap: string;
+  i: Integer;
+begin
+  if edXORKey.Text <> '' then
+  begin
+    i := 1;
+    HexMap := '';
+    while i <= Length(MPHexEditor1.AsHex) do
+    begin
+      HexMap := HexMap + edXORKey.Text;
+      Inc(i);
+    end;
+    MPHexEditor1.AsHex := BFxorit(MPHexEditor1.AsHex, HexMap);
+  end;
+end;
+
+procedure TfrmMain.mnuHexCopyClipTextSelClick(Sender: TObject);
+begin
+  Clipboard.AsText := TMPHexEditor(PopUpMnuHex.PopupComponent).SelectionAsText;
+end;
+
+procedure TfrmMain.mnuHexCopyClipHexSelClick(Sender: TObject);
+begin
+  Clipboard.AsText := TMPHexEditor(PopUpMnuHex.PopupComponent).SelectionAsHex;
+end;
+
+procedure TfrmMain.edXORKeyMAXKeyPress(Sender: TObject; var Key: Char);
+begin
+  if not (Key in [#8, '0'..'9', 'A'..'F', 'a'..'f']) then
+    Key := #0;
+end;
+
+procedure TfrmMain.btHexDisasmClick(Sender: TObject);
+var
+  daCode: TDisAsm;
+  dwCount: Integer;
+  memStream: TMemoryStream;
+  opcodeCode: string;
+  lenDiff: Integer;
+begin
+  daCode := TDisAsm.Create;
+  memStream := TMemoryStream.Create;
+  MPHexEditor1.SaveToStream(memStream);
+  //ShowMessage(IntToStr(memStream.size));
+  daCode.Disassemble(memStream.Memory, memStream.Size);
+  mmDisasm.Clear;
+  opcodeCounter := 0;
+  SetLength(opcodeSize, daCode.Count + 1);
+  //uradi proveru da li je daCode.size manji od memStream.Size pa uradi while petlju
+  for dwCount := 0 to Pred(daCode.Count) do
+  begin
+    opcodeCode := Copy(MPHexEditor1.AsHex, (opcodeCounter * 2) +1,
+      daCode[dwCount].Code.Size * 2);
+    while Length(opcodeCode) < 21 do
+      opcodeCode := opcodeCode + ' ';
+    mmDisasm.Lines.Add({IntToStr(daCode[dwCount].Code.Size) + #9 + }opcodeCode
+      + daCode[dwCount].Code.szText);
+    opcodeSize[dwCount + 1] := opcodeCounter;
+    Inc(opcodeCounter, daCode[dwCount].Code.Size);
+  end;
+  lenDiff := memStream.Size - daCode.Size;
+  if lenDiff <> 0 then
+  begin
+    mmDisasm.Lines.Add('===================  ===================');
+    mmDisasm.Lines.Add('Error: unexpected byte at ' + IntToHex(daCode.Size, 6));
+    mmDisasm.Lines.Add('The rest of the code contains ' + IntToStr(lenDiff) + ' bytes');
+  end;
+  opcodeCounter := 0;
+  mmDisasm.Refresh;
+  memStream.Free;
+  daCode.Free;
+end;
+
+procedure TfrmMain.mmDisasmGutterGetText(Sender: TObject; aLine: Integer;
+  var aText: WideString);
+begin
+  if Length(opcodeSize) > 0 then
+  if aLine < Length(opcodeSize) then
+    aText := IntToHex(opcodeSize[aLine], 6)
+  else aText := '';
 end;
 
 end.

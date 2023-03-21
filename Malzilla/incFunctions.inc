@@ -74,6 +74,86 @@ begin
   end;
 end;
 
+function KalimeroS1(const AText, ARegEx: string; output: TStringGrid): integer;
+const
+  RegExTemplate =
+    'id="?''?([\w]+)"?''?>([\w]+)<';
+var
+  PrevPos: integer;
+  RRow: Integer;
+  RName, RValue: string;
+begin
+  PrevPos := 1;
+  RRow := 0;
+  with TRegExpr.Create do
+  try
+    Expression := ARegEx;
+    if Exec(AText) then
+      repeat
+        RName := Match[1];
+        RValue := Match[2];
+        output.RowCount := output.RowCount + 1;
+        Output.Cells[0, RRow] := RName;
+        Output.Cells[1, RRow] := RValue;
+        Inc(RRow);
+        PrevPos := MatchPos[0] + MatchLen[0];
+      until not ExecNext;
+  finally Free;
+    Result := 1;
+  end;
+end;
+
+function EscapeCorrection(AIn: WideString): WideString;
+begin
+  Result := WideStringReplace(AIn, '\', '\\', [rfReplaceAll]);
+  Result := WideStringReplace(Result, '"', '\"', [rfReplaceAll]);
+end;
+
+function EscapeCorrection_old(AIn: WideString):WideString;
+var
+  i: Integer;
+begin
+  i := 1;
+  Result := '';
+  while i <= Length(AIn) do
+  begin
+    if AIn[i] = '\' then
+    begin
+      if (i = 1) then
+      begin
+        if (AIn[i+1] <> '\') then
+        Result := Result + '\\';
+      end else
+      if i > 1 then
+      begin
+        if AIn[i-1] <> '\' then Result := Result + '\\';
+      end;
+    end else
+    if AIn[i] = '"' then
+    begin
+      if i = 1 then Result := Result + '\"'
+      else
+        if AIn[i-1] <> '\' then Result := Result + '\"'
+      else
+        Result := Result + AIn[i];
+    end else
+    if AIn[i] = '''' then
+    begin
+      if i = 1 then Result := Result + '\'''
+      else
+        if AIn[i-1] <> '\' then Result := Result + '\'''
+      else
+        Result := Result + AIn[i];
+    end else
+    begin
+      Result := Result + AIn[i];
+    end;
+    Inc(i);
+  end;
+  Result := WideStringReplace(Result, #13, '', [rfReplaceAll]);
+  Result := WideStringReplace(Result, #10, '', [rfReplaceAll]);
+end;
+
 function FindFilesW(Directory: widestring; const Files: TWideStrings):
   Integer;
 var
@@ -703,3 +783,34 @@ begin
   {here you may add another symbols from RFC if you need}
 end;
 
+procedure AutoSizeGrid(Grid: TStringGrid);
+const
+  ColWidthMin = 10;
+var
+  C, R, W, ColWidthMax: integer;
+begin
+  for C := 0 to Grid.ColCount - 1 do
+  begin
+    ColWidthMax := ColWidthMin;
+    for R := 0 to (Grid.RowCount - 1) do
+    begin
+      W := Grid.Canvas.TextWidth(Grid.Cells[C, R]);
+      if W > ColWidthMax then
+        ColWidthMax := W;
+    end;
+    Grid.ColWidths[C] := ColWidthMax + 5;
+  end;
+end;
+
+function Str2Hex(inStr: string):string;
+var
+  s:string;
+  i: integer;
+begin
+  s := '';
+  for i := 1 to length(inStr) do
+  begin
+    s := s + IntToHex(ord(inStr[i]), 2);
+  end;
+  result := s;
+end;

@@ -53,6 +53,7 @@ type
     procedure Execute; override;
     procedure UpdateMain;
     procedure UpdateStatus;
+    procedure ReleaseMemos;
 
   public
     tScript: WideString;
@@ -106,6 +107,19 @@ begin
   frmMain.DecoderCallback(uCompiled);
 end;
 
+procedure TJSBrowserProxy.ReleaseMemos;
+begin
+  frmMain.mmScript.Visible := True;
+  frmMain.mmResult.Visible := True;
+  //frmMain.mmResult.Enabled := True;
+  //frmMain.mmScript.Enabled := True;
+  frmMain.btRunScript.Enabled := True;
+  frmMain.btDebug.Enabled := True;
+  untMain.Busy := False;
+  frmMain.mmResult.Lines.EndUpdate;
+  frmMain.mmScript.Lines.EndUpdate;
+end;
+
 procedure TJSBrowserProxy.Execute;
 var
   sl: TStringList;
@@ -140,23 +154,22 @@ begin
   uBrws.CreateObjects;
   if uBrws.RunScript(tScript) then
   begin
-    if not killed then
-    begin
-      uCompiled := True;
-      uStatus := 'Script compiled';
-    end
+    uCompiled := True;
+    uStatus := 'Script compiled';
+    Synchronize(ReleaseMemos);
+    Synchronize(UpdateStatus);
+    Synchronize(UpdateMain);
   end
   else
   begin
-    if not killed then
-    begin
-      uCompiled := False;
-      uStatus := 'Collecting garbage';
-      Synchronize(UpdateStatus);
-      sl := TStringList.Create;
-      try
-        FindFiles(tEvalFolder,
-          faAnyFile, 0, false, sl);
+    uCompiled := False;
+    uStatus := 'Collecting garbage';
+    Synchronize(UpdateStatus);
+    sl := TStringList.Create;
+    try
+      FindFiles(tEvalFolder,
+        faAnyFile, 0, false, sl);
+      if sl.Count > 0 then
         for i := 0 to sl.Count - 1 do
         begin
           tmpName := MD5Print(MD5File(sl[i]));
@@ -165,20 +178,18 @@ begin
           else
             DeleteFile(sl[i]);
         end;
-        if sl.Count > 0 then
-          uStatus := 'Script can''t be compiled, but it produced evaluation results'
-        else
-          uStatus := 'Script can''t be compiled';
-      finally
-        sl.Free;
-      end;
+      if sl.Count > 0 then
+        uStatus := 'Script can''t be compiled, but it produced evaluation results'
+      else
+        uStatus := 'Script can''t be compiled';
+      Synchronize(UpdateStatus);
+      Synchronize(UpdateMain);
+      Synchronize(ReleaseMemos);
+    finally
+      sl.Free;
     end;
   end;
-  Synchronize(UpdateStatus);
-  Synchronize(UpdateMain);
-  if not killed then
-    uBrws.Free;
+  uBrws.Free;
 end;
 
 end.
-

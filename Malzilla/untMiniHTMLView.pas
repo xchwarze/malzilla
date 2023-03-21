@@ -389,4 +389,3 @@ begin
   ShowMessage('Linking to "' + TLabel(Sender).Hint + '"');
 end;
 end.
-

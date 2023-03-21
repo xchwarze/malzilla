@@ -1,6 +1,6 @@
 object frmMain: TfrmMain
-  Left = 172
-  Top = 105
+  Left = 218
+  Top = 107
   Width = 1017
   Height = 801
   Caption = 'Malzilla by bobby'
@@ -146,7 +146,7 @@ object frmMain: TfrmMain
               OnClick = btSendToHTMLParserClick
             end
             object edFind: TTntEdit
-              Left = 677
+              Left = 693
               Top = 8
               Width = 140
               Height = 21
@@ -184,6 +184,15 @@ object frmMain: TfrmMain
               TabOrder = 8
               OnClick = btMiniHTMLViewClick
             end
+            object cbCaseSensitive: TTntCheckBox
+              Left = 693
+              Top = 32
+              Width = 97
+              Height = 17
+              Anchors = [akTop, akRight]
+              Caption = 'Case sensitive'
+              TabOrder = 9
+            end
           end
         end
         object tsBrowserHex: TTntTabSheet
@@ -202,7 +211,7 @@ object frmMain: TfrmMain
             Font.Name = 'Courier New'
             Font.Style = []
             ParentFont = False
-            PopupMenu = PopUpMnuDownloadHex
+            PopupMenu = PopUpMnuHex
             TabOrder = 0
             BytesPerRow = 16
             Translation = tkAsIs
@@ -560,7 +569,7 @@ object frmMain: TfrmMain
         ShowHint = False
         TabOrder = 2
         Tabs.Strings = (
-          'New tab (1)')
+          'New Tab (1)')
         TabIndex = 0
         OnChange = tbDownloaderTabsChange
         OnChanging = tbDownloaderTabsChanging
@@ -603,9 +612,10 @@ object frmMain: TfrmMain
             81)
           object Label24: TTntLabel
             Left = 562
-            Top = 39
+            Top = 55
             Width = 3
             Height = 13
+            Anchors = [akTop, akRight]
           end
           object btRunScript: TTntButton
             Left = 17
@@ -725,6 +735,15 @@ object frmMain: TfrmMain
             Caption = 'Templates'
             TabOrder = 12
             OnClick = btTemplateClick
+          end
+          object cbCaseSensitive2: TTntCheckBox
+            Left = 562
+            Top = 32
+            Width = 97
+            Height = 17
+            Anchors = [akTop, akRight]
+            Caption = 'Case sensitive'
+            TabOrder = 13
           end
         end
         object mmScript: TSynMemo
@@ -854,6 +873,13 @@ object frmMain: TfrmMain
           Height = 13
           Caption = 'Replace:'
         end
+        object TntLabel1: TTntLabel
+          Left = 840
+          Top = 8
+          Width = 46
+          Height = 13
+          Caption = 'XOR key:'
+        end
         object edDelimiter: TTntEdit
           Left = 153
           Top = 26
@@ -950,7 +976,7 @@ object frmMain: TfrmMain
         object btReplace: TTntButton
           Left = 700
           Top = 106
-          Width = 110
+          Width = 115
           Height = 21
           Caption = 'Replace'
           TabOrder = 13
@@ -1017,6 +1043,23 @@ object frmMain: TfrmMain
           Caption = 'Postdelimiter'
           TabOrder = 17
         end
+        object edXOR: TTntEdit
+          Left = 840
+          Top = 26
+          Width = 115
+          Height = 21
+          TabOrder = 18
+          OnKeyPress = edXORKeyPress
+        end
+        object btXOR: TTntButton
+          Left = 840
+          Top = 71
+          Width = 115
+          Height = 21
+          Caption = 'XOR'
+          TabOrder = 19
+          OnClick = btXORClick
+        end
       end
       object Panel13: TPanel
         Left = 0
@@ -1025,11 +1068,188 @@ object frmMain: TfrmMain
         Height = 592
         Align = alClient
         TabOrder = 0
-        object mmMiscDec: TSynMemo
+        object PageControl6: TTntPageControl
           Left = 1
           Top = 1
           Width = 999
           Height = 590
+          ActivePage = tsMiscText
+          Align = alClient
+          TabOrder = 0
+          OnChange = tbChange
+          object tsMiscText: TTntTabSheet
+            Caption = 'Text'
+            object mmMiscDec: TSynMemo
+              Left = 0
+              Top = 0
+              Width = 991
+              Height = 562
+              Align = alClient
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -13
+              Font.Name = 'Courier New'
+              Font.Style = []
+              PopupMenu = PopUpMnu
+              TabOrder = 0
+              Gutter.Font.Charset = DEFAULT_CHARSET
+              Gutter.Font.Color = clWindowText
+              Gutter.Font.Height = -11
+              Gutter.Font.Name = 'Courier New'
+              Gutter.Font.Style = []
+              Gutter.Visible = False
+              Options = [eoAutoIndent, eoEnhanceEndKey, eoGroupUndo, eoRightMouseMovesCursor, eoShowScrollHint, eoSmartTabDelete, eoSmartTabs]
+              RightEdge = 0
+              WordWrap = True
+            end
+          end
+          object tsMixHex: TTntTabSheet
+            Caption = 'Hex'
+            object MPHexEditor3: TMPHexEditor
+              Left = 0
+              Top = 0
+              Width = 991
+              Height = 521
+              Cursor = crIBeam
+              Align = alClient
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -15
+              Font.Name = 'Courier New'
+              Font.Style = []
+              ParentFont = False
+              PopupMenu = PopUpMnuHex
+              TabOrder = 0
+              BytesPerRow = 16
+              Translation = tkAsIs
+              OffsetFormat = '-!10:0x|'
+              Colors.Background = clWindow
+              Colors.ChangedBackground = 11075583
+              Colors.ChangedText = clMaroon
+              Colors.CursorFrame = clNavy
+              Colors.Offset = clBlack
+              Colors.OddColumn = clBlue
+              Colors.EvenColumn = clNavy
+              Colors.CurrentOffsetBackground = clBtnShadow
+              Colors.OffsetBackGround = clBtnFace
+              Colors.CurrentOffset = clBtnHighlight
+              Colors.Grid = clBtnFace
+              Colors.NonFocusCursorFrame = clAqua
+              Colors.ActiveFieldBackground = clWindow
+              FocusFrame = True
+              DrawGridLines = False
+              Version = 'May 24, 2006; '#169' markus stephany, vcl[at]mirkes[dot]de'
+            end
+            object Panel4: TPanel
+              Left = 0
+              Top = 521
+              Width = 991
+              Height = 41
+              Align = alBottom
+              TabOrder = 1
+              object cbMiscHexUnicode: TTntCheckBox
+                Left = 17
+                Top = 8
+                Width = 80
+                Height = 19
+                Caption = 'Unicode'
+                TabOrder = 0
+                OnClick = cbMiscHexUnicodeClick
+              end
+              object cbMiscHexUnicodeBigEndian: TTntCheckBox
+                Left = 109
+                Top = 8
+                Width = 132
+                Height = 19
+                Caption = 'Unicode Big Endian'
+                TabOrder = 1
+                OnClick = cbMiscHexUnicodeBigEndianClick
+              end
+              object cbMiscHexSwapNibbles: TTntCheckBox
+                Left = 252
+                Top = 8
+                Width = 102
+                Height = 19
+                Caption = 'Swap Nibbles'
+                TabOrder = 2
+                OnClick = cbMiscHexSwapNibblesClick
+              end
+            end
+          end
+        end
+      end
+    end
+    object tsKalimeroProcessor: TTntTabSheet
+      Caption = 'Kalimero Processor'
+      object Splitter8: TSplitter
+        Left = 657
+        Top = 0
+        Height = 632
+      end
+      object Panel6: TPanel
+        Left = 0
+        Top = 632
+        Width = 1001
+        Height = 114
+        Align = alBottom
+        TabOrder = 0
+        object btKalimeroStep1: TTntButton
+          Left = 16
+          Top = 16
+          Width = 100
+          Height = 21
+          Caption = 'Detect'
+          TabOrder = 0
+          OnClick = btKalimeroStep1Click
+        end
+        object btKalimeroStep2: TTntButton
+          Left = 664
+          Top = 16
+          Width = 100
+          Height = 21
+          Caption = 'Make'
+          TabOrder = 1
+          OnClick = btKalimeroStep2Click
+        end
+        object edKalimeroRegEx: TTntEdit
+          Left = 16
+          Top = 56
+          Width = 289
+          Height = 21
+          TabOrder = 2
+          Text = 'id=("?'#39'?[\w]+"?'#39'?)>((.)*?)<'
+        end
+        object edKalimeroReplace: TTntEdit
+          Left = 664
+          Top = 56
+          Width = 329
+          Height = 21
+          TabOrder = 3
+          Text = 'KalimeroName = new element("KalimeroName","KalimeroValue");'
+        end
+        object cbKalimeroEscapeCorrection: TTntCheckBox
+          Left = 784
+          Top = 16
+          Width = 113
+          Height = 17
+          Caption = 'Escape correction'
+          Checked = True
+          State = cbChecked
+          TabOrder = 4
+        end
+      end
+      object Panel9: TPanel
+        Left = 0
+        Top = 0
+        Width = 657
+        Height = 632
+        Align = alLeft
+        TabOrder = 1
+        object mmKalimero: TSynMemo
+          Left = 1
+          Top = 1
+          Width = 655
+          Height = 630
           Align = alClient
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -1044,9 +1264,138 @@ object frmMain: TfrmMain
           Gutter.Font.Name = 'Courier New'
           Gutter.Font.Style = []
           Gutter.Visible = False
+          Highlighter = SynWebHtmlSyn1
           Options = [eoAutoIndent, eoEnhanceEndKey, eoGroupUndo, eoRightMouseMovesCursor, eoShowScrollHint, eoSmartTabDelete, eoSmartTabs, eoTabsToSpaces, eoTrimTrailingSpaces]
           RightEdge = 0
           WordWrap = True
+        end
+      end
+      object Panel10: TPanel
+        Left = 660
+        Top = 0
+        Width = 341
+        Height = 632
+        Align = alClient
+        TabOrder = 2
+        object sgKalimeroArray: TStringGrid
+          Left = 1
+          Top = 1
+          Width = 339
+          Height = 630
+          Align = alClient
+          ColCount = 2
+          FixedCols = 0
+          FixedRows = 0
+          TabOrder = 0
+        end
+      end
+    end
+    object tsLibEmu: TTntTabSheet
+      Caption = 'Shellcode analyzer'
+      object Splitter9: TSplitter
+        Left = 0
+        Top = 453
+        Width = 1001
+        Height = 3
+        Cursor = crVSplit
+        Align = alBottom
+      end
+      object Panel30: TPanel
+        Left = 0
+        Top = 456
+        Width = 1001
+        Height = 290
+        Align = alBottom
+        TabOrder = 0
+        object mmLibEmuOutput: TMemo
+          Left = 1
+          Top = 1
+          Width = 999
+          Height = 288
+          Align = alClient
+          ScrollBars = ssBoth
+          TabOrder = 0
+        end
+      end
+      object Panel31: TPanel
+        Left = 0
+        Top = 389
+        Width = 1001
+        Height = 64
+        Align = alBottom
+        TabOrder = 1
+        DesignSize = (
+          1001
+          64)
+        object btRunLibEmu: TTntButton
+          Left = 17
+          Top = 22
+          Width = 110
+          Height = 21
+          Caption = 'Run emulation'
+          TabOrder = 0
+          OnClick = btRunLibEmuClick
+        end
+        object btLibEmuAbort: TButton
+          Left = 880
+          Top = 22
+          Width = 100
+          Height = 21
+          Anchors = [akTop, akRight]
+          Caption = 'Cancel'
+          TabOrder = 1
+          OnClick = btLibEmuAbortClick
+        end
+        object cbLibEmuGetPC: TTntCheckBox
+          Left = 144
+          Top = 24
+          Width = 73
+          Height = 17
+          Caption = 'GetPC'
+          TabOrder = 2
+        end
+      end
+      object Panel34: TPanel
+        Left = 0
+        Top = 0
+        Width = 1001
+        Height = 389
+        Align = alClient
+        TabOrder = 2
+        object hexLibEmuInput: TMPHexEditor
+          Left = 1
+          Top = 1
+          Width = 999
+          Height = 387
+          Cursor = crIBeam
+          Align = alClient
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -15
+          Font.Name = 'Courier New'
+          Font.Style = []
+          ParentFont = False
+          PopupMenu = PopUpMnuHex
+          TabOrder = 0
+          BytesPerRow = 16
+          Translation = tkAsIs
+          OffsetFormat = '-!10:0x|'
+          Colors.Background = clWindow
+          Colors.ChangedBackground = 11075583
+          Colors.ChangedText = clMaroon
+          Colors.CursorFrame = clNavy
+          Colors.Offset = clBlack
+          Colors.OddColumn = clBlue
+          Colors.EvenColumn = clNavy
+          Colors.CurrentOffsetBackground = clBtnShadow
+          Colors.OffsetBackGround = clBtnFace
+          Colors.CurrentOffset = clBtnHighlight
+          Colors.Grid = clBtnFace
+          Colors.NonFocusCursorFrame = clAqua
+          Colors.ActiveFieldBackground = clWindow
+          FocusFrame = True
+          DrawGridLines = False
+          Version = 'May 24, 2006; '#169' markus stephany, vcl[at]mirkes[dot]de'
         end
       end
     end
@@ -1244,11 +1593,19 @@ object frmMain: TfrmMain
     object tsHexView: TTntTabSheet
       Caption = 'Hex view'
       ImageIndex = 6
+      object Splitter10: TSplitter
+        Left = 0
+        Top = 572
+        Width = 1001
+        Height = 4
+        Cursor = crVSplit
+        Align = alBottom
+      end
       object MPHexEditor1: TMPHexEditor
         Left = 0
         Top = 0
-        Width = 1001
-        Height = 705
+        Width = 816
+        Height = 531
         Cursor = crIBeam
         Align = alClient
         Font.Charset = DEFAULT_CHARSET
@@ -1281,7 +1638,7 @@ object frmMain: TfrmMain
       end
       object Panel18: TPanel
         Left = 0
-        Top = 705
+        Top = 531
         Width = 1001
         Height = 41
         Align = alBottom
@@ -1312,6 +1669,150 @@ object frmMain: TfrmMain
           Caption = 'Swap Nibbles'
           TabOrder = 2
           OnClick = cbHexSwapNibblesClick
+        end
+        object btHexDisasm: TTntButton
+          Left = 400
+          Top = 8
+          Width = 100
+          Height = 21
+          Caption = 'Disassemble'
+          TabOrder = 3
+          OnClick = btHexDisasmClick
+        end
+      end
+      object TntPanel2: TTntPanel
+        Left = 816
+        Top = 0
+        Width = 185
+        Height = 531
+        Align = alRight
+        TabOrder = 2
+        object TntLabel4: TTntLabel
+          Left = 8
+          Top = 48
+          Width = 67
+          Height = 13
+          Caption = 'Strings to find:'
+        end
+        object TntLabel5: TTntLabel
+          Left = 56
+          Top = 8
+          Width = 66
+          Height = 13
+          Caption = 'Find XOR key'
+        end
+        object TntLabel6: TTntLabel
+          Left = 8
+          Top = 424
+          Width = 21
+          Height = 13
+          Caption = 'Key:'
+        end
+        object TntLabel7: TTntLabel
+          Left = 8
+          Top = 272
+          Width = 88
+          Height = 13
+          Caption = 'Max key to check:'
+        end
+        object lbXORString: TTntLabel
+          Left = 8
+          Top = 352
+          Width = 65
+          Height = 13
+          Caption = 'Current string:'
+        end
+        object lbXORKey: TTntLabel
+          Left = 8
+          Top = 376
+          Width = 57
+          Height = 13
+          Caption = 'Current key:'
+        end
+        object mmXORStrings: TTntMemo
+          Left = 8
+          Top = 64
+          Width = 169
+          Height = 201
+          TabOrder = 0
+        end
+        object btBFXOR: TTntButton
+          Left = 8
+          Top = 320
+          Width = 100
+          Height = 21
+          Caption = 'Find'
+          TabOrder = 1
+          OnClick = btBFXORClick
+        end
+        object edXORKey: TTntEdit
+          Left = 8
+          Top = 440
+          Width = 121
+          Height = 21
+          TabOrder = 2
+          OnKeyPress = edXORKeyKeyPress
+        end
+        object btApplyXor: TTntButton
+          Left = 8
+          Top = 472
+          Width = 100
+          Height = 21
+          Caption = 'Apply XOR'
+          TabOrder = 3
+          OnClick = btApplyXorClick
+        end
+        object edXORKeyMAX: TTntEdit
+          Left = 8
+          Top = 288
+          Width = 121
+          Height = 21
+          TabOrder = 4
+          OnKeyPress = edXORKeyMAXKeyPress
+        end
+        object cbXORTurbo: TTntCheckBox
+          Left = 8
+          Top = 400
+          Width = 97
+          Height = 17
+          Caption = 'Turbo'
+          TabOrder = 5
+          Visible = False
+        end
+      end
+      object Panel35: TPanel
+        Left = 0
+        Top = 576
+        Width = 1001
+        Height = 170
+        Align = alBottom
+        TabOrder = 3
+        object mmDisasm: TSynMemo
+          Left = 1
+          Top = 1
+          Width = 999
+          Height = 168
+          Align = alClient
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Courier New'
+          Font.Style = []
+          TabOrder = 0
+          Gutter.AutoSize = True
+          Gutter.DigitCount = 6
+          Gutter.Font.Charset = DEFAULT_CHARSET
+          Gutter.Font.Color = clWindowText
+          Gutter.Font.Height = -11
+          Gutter.Font.Name = 'Courier New'
+          Gutter.Font.Style = []
+          Gutter.LeadingZeros = True
+          Gutter.ShowLineNumbers = True
+          Gutter.ZeroStart = True
+          Gutter.LineNumberStart = 0
+          RightEdge = 20
+          ScrollBars = ssVertical
+          OnGutterGetText = mmDisasmGutterGetText
         end
       end
     end
@@ -2075,7 +2576,7 @@ object frmMain: TfrmMain
             object Label19: TTntLabel
               Left = 1
               Top = 1
-              Width = 991
+              Width = 126
               Height = 13
               Align = alTop
               Caption = 'Clipboard Monitor Triggers:'
@@ -2345,7 +2846,15 @@ object frmMain: TfrmMain
             'Special thanks to JohnC and sowhat-x for hosting the discussion ' +
             'about Malzilla'
           'on Malware Domain List forums:'
-          'www.malwaredomainlist.com/forums/')
+          'www.malwaredomainlist.com/forums/'
+          ''
+          ''
+          'Shellcode analyzer is based on libemu project:'
+          'http://libemu.mwcollect.org/'
+          ''
+          'Disassembler is based on Delphi port of libdisasm:'
+          'http://bastard.sourceforge.net/libdisasm.html'
+          'Pascal/Delphi port by Russell Libby')
         ReadOnly = True
         TabOrder = 0
       end
@@ -2556,6 +3065,14 @@ object frmMain: TfrmMain
     object mnuHexCopyClipHex: TMenuItem
       Caption = 'Copy as hex'
       OnClick = mnuHexCopyClipHexClick
+    end
+    object mnuHexCopyClipTextSel: TMenuItem
+      Caption = 'Copy selection as text'
+      OnClick = mnuHexCopyClipTextSelClick
+    end
+    object mnuHexCopyClipHexSel: TMenuItem
+      Caption = 'Copy selection as hex'
+      OnClick = mnuHexCopyClipHexSelClick
     end
     object N4: TMenuItem
       Caption = '-'
@@ -2795,5 +3312,16 @@ object frmMain: TfrmMain
       Caption = 'Hex'
       OnClick = mnuIncrementHexClick
     end
+  end
+  object emulator: TDosCommand
+    OnTerminated = emulatorTerminated
+    InputToOutput = False
+    MaxTimeAfterBeginning = 0
+    MaxTimeAfterLastOutput = 0
+    ShowWindow = swHIDE
+    CreationFlag = fCREATE_NEW_CONSOLE
+    ReturnCode = rcLF
+    Left = 784
+    Top = 56
   end
 end

@@ -4,6 +4,7 @@ program malzilla;
 {%File 'incFunctions.inc'}
 {%File 'incPasScriptFunctions.inc'}
 {%File 'incTranslate.inc'}
+{%File 'incAlphaDec.inc'}
 
 uses
   Forms,

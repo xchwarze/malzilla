@@ -47,8 +47,6 @@ type
     Panel1: TPanel;
     cbStayOnTop: TTntCheckBox;
     procedure lbCacheListDblClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cbStayOnTopClick(Sender: TObject);
   private
@@ -60,8 +58,7 @@ type
 
 var
   frmCacheList: TfrmCacheList;
-  cacheMD5: TStringList;
-  cacheURL: TStringList;
+
 implementation
 
 {$R *.dfm}
@@ -70,7 +67,16 @@ uses untMain;
 
 procedure TfrmCacheList.lbCacheListDblClick(Sender: TObject);
 var
-  i: integer;
+  i, j: integer;
+  AMD5: string;
+  AURL: string;
+  ADate: TDateTime;
+  AReferrer: string;
+  AUserAgent: string;
+  ACookie: string;
+  AOccurences: Integer;
+  parser: Integer;
+  parserString: string;
 begin
   i := lbCacheList.ItemIndex;
   if FileExists(ExtractFilePath(application.ExeName) + 'Cache\' +
@@ -79,18 +85,60 @@ begin
       'Cache\' + untMain.cacheMD5[i])
   else
     ShowMessage('File is missing from the cache');
-end;
 
-procedure TfrmCacheList.FormCreate(Sender: TObject);
-begin
-  cacheMD5 := TStringList.Create;
-  cacheURL := TStringLIst.Create;
-end;
-
-procedure TfrmCacheList.FormDestroy(Sender: TObject);
-begin
-  cacheMD5.Free;
-  cacheURL.Free;
+  AMD5 := '';
+  AURL := '';
+  AReferrer := '';
+  AUserAgent := '';
+  ACookie := '';
+  AOccurences := 0;
+  for j := 0 to untMain.cacheOther.Count - 1 do
+  begin
+    AMD5 := Copy(untMain.cacheOther[j], 1, Pos('*', untMain.cacheOther[j]) - 1);
+    if AMD5 = untMain.cacheMD5[i] then
+      Inc(AOccurences);
+  end;
+  if AOccurences = 1 then
+  begin
+    j := 0;
+    while j < untMain.cacheOther.Count do
+    begin
+      AMD5 := Copy(untMain.cacheOther[j], 1, Pos('*', untMain.cacheOther[j]) -
+        1);
+      if AMD5 = untMain.cacheMD5[i] then
+      begin
+        parserString := untMain.cacheOther[j];
+        parser := Pos('**', parserString);
+        if parser > 0 then
+        begin
+          AMD5 := Copy(parserString, 1, parser - 1);
+          Delete(parserString, 1, parser + 1);
+          parser := Pos('**', parserString);
+          AURL := Copy(parserString, 1, parser - 1);
+          Delete(parserString, 1, parser + 1);
+          parser := Pos('**', parserString);
+          ADate := StrToDateTime(Copy(parserString, 1, parser - 1));
+          Delete(parserString, 1, parser + 1);
+          parser := Pos('**', parserString);
+          AUserAgent := Copy(parserString, 1, parser - 1);
+          Delete(parserString, 1, parser + 1);
+          parser := Pos('**', parserString);
+          AReferrer := Copy(parserString, 1, parser - 1);
+          Delete(parserString, 1, parser + 1);
+          ACookie := parserString;
+          Break;
+        end;
+      end
+      else
+        Inc(j);
+    end;
+  end
+  else if AOccurences > 1 then
+    ShowMessage('Sorry, error occured. For one cache file more than one index data found');
+  frmMain.edURL.Text := AURL;
+  frmMain.comboUserAgent.Text := AUserAgent;
+  frmMain.edReferrer.Text := AReferrer;
+  frmMain.edCookies.Text := ACookie;
 end;
 
 procedure TfrmCacheList.FormShow(Sender: TObject);
@@ -104,7 +152,7 @@ begin
         + ')    File: ' + untMain.cacheMD5[i]);
   except
     on exception do
-      ShowMessage('Cache is corrupted');
+      ShowMessage('Cache index is corrupted');
   end;
 end;
 

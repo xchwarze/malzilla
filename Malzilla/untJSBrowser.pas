@@ -132,7 +132,7 @@ end;
 
 constructor TBrowserBase.Create;
 begin
-  fEngine := TJSEngine.Create(400000);
+  fEngine := TJSEngine.Create(4000000);
   GlobBrowserBase := Self;
   eval_replace := '';
   fDebuger := False;
@@ -351,4 +351,3 @@ begin
   Result := JS_TRUE;
 end;
 end.
-
