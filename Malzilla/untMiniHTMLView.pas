@@ -4,7 +4,9 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, HtmlPars, ExtCtrls, StdCtrls, Buttons, ComCtrls;
+  Dialogs, ExtCtrls, StdCtrls, Buttons, ComCtrls,
+  //HTMLPars - http://soarowl.uhome.net
+  HtmlPars;
 
 type
   TfrmMiniHTMLView = class(TForm)

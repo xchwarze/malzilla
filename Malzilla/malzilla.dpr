@@ -3,8 +3,6 @@ program malzilla;
 {%ToDo 'malzilla.todo'}
 {%File 'incFunctions.inc'}
 {%File 'incPasScriptFunctions.inc'}
-{%File 'incTranslate.inc'}
-{%File 'incAlphaDec.inc'}
 
 uses
   Forms,

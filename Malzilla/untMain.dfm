@@ -1,6 +1,6 @@
 object frmMain: TfrmMain
-  Left = 218
-  Top = 107
+  Left = 219
+  Top = 162
   Width = 1017
   Height = 801
   Caption = 'Malzilla by bobby'
@@ -1100,6 +1100,7 @@ object frmMain: TfrmMain
               Gutter.Visible = False
               Options = [eoAutoIndent, eoEnhanceEndKey, eoGroupUndo, eoRightMouseMovesCursor, eoShowScrollHint, eoSmartTabDelete, eoSmartTabs]
               RightEdge = 0
+              SearchEngine = dlgSearch
               WordWrap = True
             end
           end
@@ -1139,6 +1140,7 @@ object frmMain: TfrmMain
               FocusFrame = True
               DrawGridLines = False
               Version = 'May 24, 2006; '#169' markus stephany, vcl[at]mirkes[dot]de'
+              InsertMode = True
             end
             object Panel4: TPanel
               Left = 0
@@ -1264,7 +1266,6 @@ object frmMain: TfrmMain
           Gutter.Font.Name = 'Courier New'
           Gutter.Font.Style = []
           Gutter.Visible = False
-          Highlighter = SynWebHtmlSyn1
           Options = [eoAutoIndent, eoEnhanceEndKey, eoGroupUndo, eoRightMouseMovesCursor, eoShowScrollHint, eoSmartTabDelete, eoSmartTabs, eoTabsToSpaces, eoTrimTrailingSpaces]
           RightEdge = 0
           WordWrap = True
@@ -2576,7 +2577,7 @@ object frmMain: TfrmMain
             object Label19: TTntLabel
               Left = 1
               Top = 1
-              Width = 126
+              Width = 991
               Height = 13
               Align = alTop
               Caption = 'Clipboard Monitor Triggers:'
@@ -2604,45 +2605,45 @@ object frmMain: TfrmMain
         object tsSettingsDownl: TTntTabSheet
           Caption = 'Download'
           object cbAutoParseLinksOnGET: TTntCheckBox
-            Left = 13
-            Top = 33
+            Left = 8
+            Top = 14
             Width = 185
             Height = 19
             Caption = 'Auto-parse links on GET'
             TabOrder = 0
           end
           object cbMalzillaProject: TTntCheckBox
-            Left = 233
-            Top = 6
+            Left = 8
+            Top = 41
             Width = 168
             Height = 19
             Caption = 'Add project info to saved files'
             TabOrder = 1
           end
           object cbAutoFocusDecoder: TTntCheckBox
-            Left = 233
-            Top = 33
+            Left = 8
+            Top = 68
             Width = 129
-            Height = 17
+            Height = 19
             Caption = 'Auto-focus Decoder'
             TabOrder = 2
           end
           object cbAutoCompleteURL: TTntCheckBox
-            Left = 480
-            Top = 33
+            Left = 8
+            Top = 121
             Width = 121
-            Height = 17
+            Height = 19
             Caption = 'Auto-complete URL'
-            TabOrder = 3
+            TabOrder = 4
             OnClick = cbAutoCompleteURLClick
           end
           object cbURLHistory: TTntCheckBox
-            Left = 480
-            Top = 8
+            Left = 8
+            Top = 95
             Width = 97
-            Height = 17
+            Height = 19
             Caption = 'URL history'
-            TabOrder = 4
+            TabOrder = 3
           end
           object Panel14: TPanel
             Left = 0
@@ -2654,7 +2655,7 @@ object frmMain: TfrmMain
             object Label7: TTntLabel
               Left = 1
               Top = 1
-              Width = 29
+              Width = 991
               Height = 13
               Align = alTop
               Caption = 'Proxy:'
@@ -2787,7 +2788,7 @@ object frmMain: TfrmMain
             object Label3: TTntLabel
               Left = 1
               Top = 1
-              Width = 91
+              Width = 991
               Height = 13
               Align = alTop
               Caption = 'User Agents Editor:'
@@ -2807,6 +2808,14 @@ object frmMain: TfrmMain
               ScrollBars = ssVertical
               TabOrder = 0
             end
+          end
+          object cbUseExtendedInfo: TTntCheckBox
+            Left = 8
+            Top = 147
+            Width = 201
+            Height = 19
+            Caption = 'Include server info in HTTP headers'
+            TabOrder = 9
           end
         end
       end
@@ -2952,7 +2961,7 @@ object frmMain: TfrmMain
         Caption = 'Remove NULLs'
         OnClick = mnuRemoveNULLsClick
       end
-      object mnuRemovewhitespaceall1: TMenuItem
+      object mnuRemovewhitespaceall1: TTntMenuItem
         Caption = 'Remove whitespace (all)'
         OnClick = mnuRemovewhitespaceall1Click
       end
@@ -2968,9 +2977,17 @@ object frmMain: TfrmMain
         Caption = 'Decode Hex'
         OnClick = mnuScriptDHexClick
       end
+      object mnuScriptDHexNoDel: TTntMenuItem
+        Caption = 'Decode Hex (no delimiter)'
+        OnClick = mnuScriptDHexNoDelClick
+      end
       object mnuScriptDUCS2: TTntMenuItem
         Caption = 'Decode UCS2'
         OnClick = mnuScriptDUCS2Click
+      end
+      object mnuScriptDUCS2NoDel: TTntMenuItem
+        Caption = 'Decode UCS2 (no delimiter)'
+        OnClick = mnuScriptDUCS2NoDelClick
       end
       object mnuScriptDBase64: TTntMenuItem
         Caption = 'Decode Base64'
@@ -3269,10 +3286,6 @@ object frmMain: TfrmMain
     Left = 832
     Top = 56
   end
-  object JvFormAutoSize1: TJvFormAutoSize
-    Left = 960
-    Top = 56
-  end
   object PopUpMnuDecoderTabs: TTntPopupMenu
     OnPopup = PopUpMnuDecoderTabsPopup
     Left = 864
@@ -3323,5 +3336,9 @@ object frmMain: TfrmMain
     ReturnCode = rcLF
     Left = 784
     Top = 56
+  end
+  object dlgSearch: TSynEditSearch
+    Left = 769
+    Top = 105
   end
 end

@@ -77,7 +77,7 @@ end;
 function KalimeroS1(const AText, ARegEx: string; output: TStringGrid): integer;
 const
   RegExTemplate =
-    'id="?''?([\w]+)"?''?>([\w]+)<';
+    '(?i)(id="?''?([\w]+)"?''?>([\w]+)<)';
 var
   PrevPos: integer;
   RRow: Integer;
@@ -109,7 +109,7 @@ begin
   Result := WideStringReplace(Result, '"', '\"', [rfReplaceAll]);
 end;
 
-function EscapeCorrection_old(AIn: WideString):WideString;
+function EscapeCorrection_old(AIn: WideString): WideString;
 var
   i: Integer;
 begin
@@ -121,30 +121,34 @@ begin
     begin
       if (i = 1) then
       begin
-        if (AIn[i+1] <> '\') then
-        Result := Result + '\\';
-      end else
-      if i > 1 then
+        if (AIn[i + 1] <> '\') then
+          Result := Result + '\\';
+      end
+      else if i > 1 then
       begin
-        if AIn[i-1] <> '\' then Result := Result + '\\';
+        if AIn[i - 1] <> '\' then
+          Result := Result + '\\';
       end;
-    end else
-    if AIn[i] = '"' then
+    end
+    else if AIn[i] = '"' then
     begin
-      if i = 1 then Result := Result + '\"'
-      else
-        if AIn[i-1] <> '\' then Result := Result + '\"'
+      if i = 1 then
+        Result := Result + '\"'
+      else if AIn[i - 1] <> '\' then
+        Result := Result + '\"'
       else
         Result := Result + AIn[i];
-    end else
-    if AIn[i] = '''' then
+    end
+    else if AIn[i] = '''' then
     begin
-      if i = 1 then Result := Result + '\'''
-      else
-        if AIn[i-1] <> '\' then Result := Result + '\'''
+      if i = 1 then
+        Result := Result + '\'''
+      else if AIn[i - 1] <> '\' then
+        Result := Result + '\'''
       else
         Result := Result + AIn[i];
-    end else
+    end
+    else
     begin
       Result := Result + AIn[i];
     end;
@@ -425,6 +429,21 @@ begin
   end;
 end;
 
+function Hex2strNoDelimiterLoop(s: string): widestring;
+var
+  i: Integer;
+  o: widestring;
+begin
+  i := 1;
+  o := '';
+  while i < Length(s) do
+  begin
+    o := o + hex2str('x' + Copy(s, i, 2), 'x');
+    i := i + 2;
+  end;
+  Result := o;
+end;
+
 function dec2str(s: string; delim: string; preDelimiter: Boolean): string;
 var
   j, i, last_portion: Integer;
@@ -453,8 +472,9 @@ begin
       for i := 1 to Length(wrd) do
         if (wrd[i] < '0') or (wrd[i] > '9') then
           Valid := False;
-      if Length(wrd) = 0 then valid := False;
-      
+      if Length(wrd) = 0 then
+        valid := False;
+
       if valid then
       begin
         //ShowMessage('valid: ' + wrd);
@@ -508,7 +528,52 @@ begin
   end;
 end;
 
-function uni2str(InString: Widestring; delim: string; preDelimiter: Boolean):
+function FourHex2WideChar(s: string; bigEndian: boolean): WideString;
+  function HexValue(c: Char): Integer;
+  begin
+    if (c >= '0') and (c <= '9') then
+      Result := Ord(c) - Ord('0')
+    else if (c >= 'A') and (c <= 'F') then
+      Result := Ord(c) - Ord('A') + 10
+    else if (c >= 'a') and (c <= 'f') then
+      Result := Ord(c) - Ord('a') + 10
+    else
+      Result := -1;
+  end;
+var
+  lo1, lo2: Byte;
+  hi1, hi2: Byte;
+  lo: Integer;
+  hi: Integer;
+begin
+  if Length(s) = 4 then
+  begin
+    if not (HexValue(s[1]) = -1) or (HexValue(s[2]) = -1) or (HexValue(s[3]) = -1)
+      or (HexValue(s[4]) = -1) then
+    begin
+      lo1 := HexValue(s[1]);
+      lo2 := HexValue(s[3]);
+      hi1 := HexValue(s[2]);
+      hi2 := HexValue(s[4]);
+      lo := (lo1 shl 4) + hi1;
+      hi := (lo2 shl 4) + hi2;
+      if bigEndian then
+      begin
+        Result := WideChar((hi shl 8) + lo);
+      end
+      else
+      begin
+        Result := WideChar((lo shl 8) + hi);
+      end;
+    end
+    else
+      Result := s
+  end
+  else
+    Result := s;
+end;
+
+function uni2str(InString: string; delim: string; preDelimiter: Boolean):
   WideString;
 var
   NumString: string;
@@ -527,11 +592,9 @@ begin
     begin
       if Copy(InString, i, Length(delim)) = delim then
       begin
-        NumString := Copy(InString, i + 2, 4);
-        CharNum := StrToIntDef('$' + NumString, 63);
-        if CharNum < $FFFF then
-          Result := Result + WideChar(Word(CharNum));
-        i := i + 6;
+        NumString := Copy(InString, i + Length(delim), 4);
+        Result := Result + FourHex2WideChar(NumString, false);
+        i := i + Length(delim) + 2 * SizeOf(WideChar);
       end
       else
       begin
@@ -553,10 +616,8 @@ begin
       if Copy(InString, i + 4, Length(delim)) = delim then
       begin
         NumString := Copy(InString, i, 4);
-        CharNum := StrToIntDef('$' + NumString, 63);
-        if CharNum < $FFFF then
-          Result := Result + WideChar(Word(CharNum));
-        i := i + 6;
+        Result := Result + FourHex2WideChar(NumString, false);
+        i := i + Length(delim) + 2 * SizeOf(WideChar);
       end
       else
       begin
@@ -565,8 +626,22 @@ begin
       end;
     end;
   end;
-  result := WideStringToUCS2(result);
-  result := WideStringReplace(result, #00, #160, [rfReplaceAll]);
+  //result := WideStringToUCS2(result);
+  //result := WideStringReplace(result, #00, #160, [rfReplaceAll]);
+end;
+
+function Uni2strNoDelimiterLoop(s: string): Widestring;
+var
+  i, c: Integer;
+  o: String;
+begin
+  i := 1;
+  while i <= Length(s) do
+  begin
+    o := Copy(s, i, 4);
+    Result := Result + FourHex2WideChar(o, false);
+    Inc(i, 2 * SizeOf(WideChar));
+  end;
 end;
 
 function uni2byte(InString: Widestring; delim: string): WideString;
@@ -595,6 +670,16 @@ begin
       Result := Result + InString[i];
       inc(i);
     end;
+  end;
+end;
+
+function UCS2HexStr(s: WideString):string;
+var
+  i: LongInt;
+begin
+  for i := 1 to Length(s) do
+  begin
+    Result := Result + IntToHex(Ord(s[i]), 4);
   end;
 end;
 
@@ -802,9 +887,9 @@ begin
   end;
 end;
 
-function Str2Hex(inStr: string):string;
+function Str2Hex(inStr: string): string;
 var
-  s:string;
+  s: string;
   i: integer;
 begin
   s := '';
@@ -814,3 +899,4 @@ begin
   end;
   result := s;
 end;
+

@@ -39,19 +39,54 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  HREFParser, Dialogs, JvBaseDlg, JvSelectDirectory, hkClipboardMonitor,
-  JvComponent, JvTrayIcon, IdBaseComponent, IdCoder, IdCoder3to4,
-  IdCoderMIME, Menus, SynURIOpener, SynHighlighterURI,
-  SynEditHighlighter, ExtCtrls, Grids, MPHexEditor, Mask, JvExMask, JvSpin,
-  StdCtrls, ComCtrls, SynEdit, SynMemo, JvFormAutoSize, TntMenus,
+  Dialogs,
+  //JVCL
+  JvBaseDlg, JvSelectDirectory, hkClipboardMonitor, JvSpin,
+  JvComponent, JvTrayIcon, JvExExtCtrls, JvRollOut, JvExMask,
+  //Indy
+  IdBaseComponent, IdCoder, IdCoder3to4,
+  IdCoderMIME,
+  //SynEdit and SynWeb
+  SynMemo,
+  SynEdit,
+  SynURIOpener,
+  SynHighlighterURI,
   SynHighlighterWeb,
-  SynHighlighterPas, uPSComponent, TntStdCtrls, TntExtCtrls, TntComCtrls,
-  StrUtils, HTTPSend, SynUnicode, ClipBrd, blcksock, IniFiles, HyperParse,
-  IpUtils,
-  uPSCompiler, RegExpr, SynTokenMatch, SynEditTypes, SynHighlighterWebData,
-  SynHighlighterWebMisc, MD5, TntSysUtils, TntDialogs, JvExExtCtrls, JvRollOut,
-  Synautil, TntClasses, TntSystem, untJSBrowserProxy, DosCommand,
-  SynEditMiscClasses, SynEditRegexSearch;
+  SynHighlighterPas,
+  SynEditHighlighter,
+  SynUnicode,
+  SynTokenMatch,
+  SynEditTypes,
+  SynHighlighterWebData,
+  SynHighlighterWebMisc,
+  //RemObjects
+  uPSComponent,
+  uPSCompiler,
+  //Synapse http://www.ararat.cz/synapse/
+  HTTPSend,
+  blcksock,
+  Synautil,
+  //Tnt  - not available as freeware anymore
+  TntSysUtils,
+  TntDialogs,
+  TntClasses,
+  TntSystem,
+  TntMenus,
+  TntStdCtrls,
+  TntExtCtrls,
+  TntComCtrls,
+  //Delphi 7
+  ExtCtrls, Grids, Mask, StdCtrls, ComCtrls,
+  StrUtils, ClipBrd, IniFiles, Menus,
+  //misc
+  HyperParse, //http://www.wakproductions.com/
+  IpUtils, //TurboPower Internet Professional (iPRO)
+  RegExpr, //http://RegExpStudio.com
+  MD5, //http://www.fichtner.net/delphi/md5/
+  DosCommand, //www.torry.net
+  HREFParser, //iedComp http://iedcomp.nm.ru
+  MPHexEditor, //www.mirkes.de
+  untJSBrowserProxy, SynEditMiscClasses, SynEditSearch, JwaWinsock2;
 
 type
 
@@ -335,7 +370,6 @@ type
     N10: TTntMenuItem;
     mnuCloseDownloaderTab: TTntMenuItem;
     FontDialog1: TFontDialog;
-    JvFormAutoSize1: TJvFormAutoSize;
     N11: TMenuItem;
     mnuLog: TMenuItem;
     tsLog: TTntTabSheet;
@@ -458,7 +492,6 @@ type
     TntLabel3: TTntLabel;
     btDeobfuscateURL: TTntButton;
     mmDeobfURL: TSynMemo;
-    mnuRemovewhitespaceall1: TMenuItem;
     rbPreDelim: TRadioButton;
     rbPostdelim: TRadioButton;
     tsMiscText: TTntTabSheet;
@@ -516,6 +549,11 @@ type
     btHexDisasm: TTntButton;
     mmDisasm: TSynMemo;
     Splitter10: TSplitter;
+    dlgSearch: TSynEditSearch;
+    mnuScriptDUCS2NoDel: TTntMenuItem;
+    mnuScriptDHexNoDel: TTntMenuItem;
+    mnuRemovewhitespaceall1: TTntMenuItem;
+    cbUseExtendedInfo: TTntCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btRunScriptClick(Sender: TObject);
@@ -698,6 +736,8 @@ type
     procedure btHexDisasmClick(Sender: TObject);
     procedure mmDisasmGutterGetText(Sender: TObject; aLine: Integer;
       var aText: WideString);
+    procedure mnuScriptDHexNoDelClick(Sender: TObject);
+    procedure mnuScriptDUCS2NoDelClick(Sender: TObject);
 
   private
     { Private declarations }
@@ -733,7 +773,7 @@ type
   end;
 
 const
-  current_version = 1.0;
+  current_version = 1.20;
 
 var
   frmMain: TfrmMain;
@@ -783,8 +823,7 @@ uses untDownloadThread, untListDownloaderThread, untCacheList,
   untHTMLObjects, untEvalResults,
   untDelimiterDlg, untMiniHTMLView, untFTPThread, DisAsm32;
 
-{$I incFunctions.inc}
-{$I incAlphaDec.Inc}
+{$I incFunctions.Inc}
 {$I incPasScriptFunctions.Inc}
 {$I incMessages.inc}
 {$I incXOR.Inc}
@@ -1629,19 +1668,28 @@ end;
 procedure TfrmMain.SetMalzillaProject(cpnName: string);
 var
   params: TStringList;
+  cookie: WideString;
+  i: Integer;
 begin
+  cookie := '';
+  for i := 0 to mmCookies.Lines.Count - 1 do
+  begin
+    cookie := cookie + mmCookies.Lines[i];
+    if i < mmCookies.Lines.Count - 1 then
+      cookie := cookie + ';';
+  end;
   if cpnName = 'mmBrowser' then
   begin
-    if Pos('<!-- Malzilla Project', mmBrowser.Text) > 0 then
+    if Pos('<!-- Malzilla Project', mmBrowser.Text) = 0 then
     begin
       params := TStringList.Create;
       params.Add('<!-- Malzilla Project v.1 -->');
       params.Add('<!-- DAT: ' + DateTimeToStr(Now) + ' -->');
       params.Add('<!-- URL: ' + edURL.Text + ' -->');
-      params.Add('<!-- REF: ' + edReferrer.Text + ' -->');
+      params.Add('<!-- REF: ' + cacheOtherReferrerCurrent + ' -->');
       if cbUserAgent.Checked then
         params.Add('<!-- UAS: ' + comboUserAgent.Text + ' -->');
-      params.Add('<!-- CCK: ' + edCookies.Text + ' -->');
+      params.Add('<!-- CCK: ' + cookie + ' -->');
       mmBrowser.Text := params.Text + mmBrowser.Text;
       params.Free;
     end;
@@ -1747,6 +1795,7 @@ begin
       true);
     edURL.AutoComplete := cbAutoCompleteURL.Checked;
     cbURLHistory.Checked := Ini.ReadBool('Downloader', 'URLHistory', true);
+    cbUseExtendedInfo.Checked := Ini.ReadBool('Downloader', 'ExtendedInfo', True);
     cbHideProxyData.Checked := Ini.ReadBool('Proxy', 'Hidden', false);
     edProxyAddress.Text := Ini.ReadString('Proxy', 'Address', '');
     edProxyPort.Text := Ini.ReadString('Proxy', 'Port', '');
@@ -2791,6 +2840,8 @@ begin
       end
       else
         downThread.tUseUserAgent := false;
+      if cbUseExtendedInfo.Checked then
+        downThread.tUseExtendedInfo := True;
       downThread.Resume;
     end
     else
@@ -3261,6 +3312,7 @@ begin
       Ini.WriteBool('Downloader', 'SaveAsProject', cbMalzillaProject.Checked);
       Ini.WriteBool('Downloader', 'AutoComplete', cbAutoCompleteURL.Checked);
       Ini.WriteBool('Downloader', 'URLHistory', cbURLHistory.Checked);
+      Ini.WriteBool('Downloader', 'ExtendedInfo', cbUseExtendedInfo.Checked);
       Ini.WriteBool('Proxy', 'Hidden', cbHideProxyData.Checked);
       Ini.WriteString('Proxy', 'Address', edProxyAddress.Text);
       Ini.WriteString('Proxy', 'Port', edProxyPort.Text);
@@ -3613,7 +3665,7 @@ begin
     tbDownloaderTabs.Tabs[tbDownloaderTabs.TabIndex] := s;
   end
   else
-    ShowMessage('debug');
+    Result := input;
 end;
 
 procedure TfrmMain.edURLExit(Sender: TObject);
@@ -4875,24 +4927,38 @@ begin
 end;
 
 procedure TfrmMain.tbChange(Sender: TObject);
-var
-  outStream: TStringStream;
 begin
-  if mmMiscDec.Text = string(mmMiscDec.Text) then
+  if PageControl6.ActivePage = tsMixHex then
   begin
-    mmMiscDec.Lines.SaveUnicode := False;
-    MPHexEditor3.UnicodeChars := False;
-    cbMiscHexUnicode.Checked := False;
+    if IsWideStringMappableToAnsi(mmMiscDec.Text) then
+    begin
+      MPHexEditor3.UnicodeChars := False;
+      cbMiscHexUnicode.Checked := False;
+      cbMiscHexUnicodeBigEndian.Checked := False;
+      MPHexEditor3.AsText := mmMiscDec.Text;
+    end
+    else
+    begin
+      mmMiscDec.Lines.SaveUnicode := True;
+      MPHexEditor3.UnicodeChars := True;
+      MPHexEditor3.UnicodeBigEndian := True;
+      cbMiscHexUnicode.Checked := True;
+      cbMiscHexUnicodeBigEndian.Checked := True;
+      //ShowMessage('Unicode');  //debug
+      MPHexEditor3.AsHex := UCS2HexStr(mmMiscDec.Text);
+    end;
   end
   else
   begin
-    mmMiscDec.Lines.SaveUnicode := True;
-    MPHexEditor3.UnicodeChars := True;
-    cbMiscHexUnicode.Checked := True;
+    if cbMiscHexUnicode.Checked then
+    begin
+      mmMiscDec.Text := Uni2strNoDelimiterLoop(MPHexEditor3.AsHex);
+    end
+    else
+    begin
+      mmMiscDec.Text := MPHexEditor3.AsText;
+    end;
   end;
-  outStream := TStringStream.Create(mmMiscDec.Text);
-  MPHexEditor3.LoadFromStream(outStream);
-  outStream.Free;
 end;
 
 procedure TfrmMain.cbMiscHexUnicodeClick(Sender: TObject);
@@ -4922,16 +4988,27 @@ procedure TfrmMain.btKalimeroStep1Click(Sender: TObject);
 var
   i: Integer;
 begin
-  sgKalimeroArray.RowCount := 0;
-  KalimeroS1(mmKalimero.Text, edKalimeroRegEx.Text, sgKalimeroArray);
-  AutoSizeGrid(sgKalimeroArray);
-  i := 0;
-  while i < sgKalimeroArray.RowCount do
+  if mmKalimero.Text <> '' then
   begin
-    if sgKalimeroArray.Cells[0, i] = '' then
-      sgKalimeroArray.RowCount := i
-    else
-      Inc(i);
+    for i := 0 to sgKalimeroArray.RowCount - 1 do
+    begin
+      sgKalimeroArray.Cells[0, i] := '';
+      sgKalimeroArray.Cells[1, i] := '';
+    end;
+    sgKalimeroArray.RowCount := 0;
+    KalimeroS1(mmKalimero.Text, edKalimeroRegEx.Text, sgKalimeroArray);
+    AutoSizeGrid(sgKalimeroArray);
+    i := 0;
+    while i < sgKalimeroArray.RowCount do
+    begin
+      if sgKalimeroArray.Cells[0, i] = '' then
+      begin
+        sgKalimeroArray.RowCount := i;
+        Break;
+      end
+      else
+        Inc(i);
+    end;
   end;
 end;
 
@@ -5165,7 +5242,7 @@ begin
   //uradi proveru da li je daCode.size manji od memStream.Size pa uradi while petlju
   for dwCount := 0 to Pred(daCode.Count) do
   begin
-    opcodeCode := Copy(MPHexEditor1.AsHex, (opcodeCounter * 2) +1,
+    opcodeCode := Copy(MPHexEditor1.AsHex, (opcodeCounter * 2) + 1,
       daCode[dwCount].Code.Size * 2);
     while Length(opcodeCode) < 21 do
       opcodeCode := opcodeCode + ' ';
@@ -5179,7 +5256,8 @@ begin
   begin
     mmDisasm.Lines.Add('===================  ===================');
     mmDisasm.Lines.Add('Error: unexpected byte at ' + IntToHex(daCode.Size, 6));
-    mmDisasm.Lines.Add('The rest of the code contains ' + IntToStr(lenDiff) + ' bytes');
+    mmDisasm.Lines.Add('The rest of the code contains ' + IntToStr(lenDiff) +
+      ' bytes');
   end;
   opcodeCounter := 0;
   mmDisasm.Refresh;
@@ -5191,9 +5269,54 @@ procedure TfrmMain.mmDisasmGutterGetText(Sender: TObject; aLine: Integer;
   var aText: WideString);
 begin
   if Length(opcodeSize) > 0 then
-  if aLine < Length(opcodeSize) then
-    aText := IntToHex(opcodeSize[aLine], 6)
-  else aText := '';
+    if aLine < Length(opcodeSize) then
+      aText := IntToHex(opcodeSize[aLine], 6)
+    else
+      aText := '';
+end;
+
+procedure TfrmMain.mnuScriptDHexNoDelClick(Sender: TObject);
+var
+  t1: WideString;
+begin
+  if TSynMemo(PopUpMnu.PopupComponent).SelLength = 0 then
+    TSynMemo(PopUpMnu.PopupComponent).Text :=
+      Hex2strNoDelimiterLoop(TSynMemo(PopUpMnu.PopupComponent).Text)
+  else
+  begin
+    t1 := Copy(TSynMemo(PopUpMnu.PopupComponent).Text,
+      TSynMemo(PopUpMnu.PopupComponent).SelStart,
+      TSynMemo(PopUpMnu.PopupComponent).SelLength);
+    t1 := Hex2strNoDelimiterLoop(t1);
+    TSynMemo(PopUpMnu.PopupComponent).Text :=
+      Copy(TSynMemo(PopUpMnu.PopupComponent).Text, 1,
+      TSynMemo(PopUpMnu.PopupComponent).SelStart - 1) + t1 +
+      Copy(TSynMemo(PopUpMnu.PopupComponent).Text,
+      TSynMemo(PopUpMnu.PopupComponent).SelEnd,
+      Length(TSynMemo(PopUpMnu.PopupComponent).Text));
+  end;
+end;
+
+procedure TfrmMain.mnuScriptDUCS2NoDelClick(Sender: TObject);
+var
+  t1: WideString;
+begin
+  if TSynMemo(PopUpMnu.PopupComponent).SelLength = 0 then
+    TSynMemo(PopUpMnu.PopupComponent).Text :=
+      Uni2strNoDelimiterLoop(TSynMemo(PopUpMnu.PopupComponent).Text)
+  else
+  begin
+    t1 := Copy(TSynMemo(PopUpMnu.PopupComponent).Text,
+      TSynMemo(PopUpMnu.PopupComponent).SelStart,
+      TSynMemo(PopUpMnu.PopupComponent).SelLength);
+    t1 := uni2strNoDelimiterLoop(t1);
+    TSynMemo(PopUpMnu.PopupComponent).Text :=
+      Copy(TSynMemo(PopUpMnu.PopupComponent).Text, 1,
+      TSynMemo(PopUpMnu.PopupComponent).SelStart - 1) + t1 +
+      Copy(TSynMemo(PopUpMnu.PopupComponent).Text,
+      TSynMemo(PopUpMnu.PopupComponent).SelEnd,
+      Length(TSynMemo(PopUpMnu.PopupComponent).Text));
+  end;
 end;
 
 end.

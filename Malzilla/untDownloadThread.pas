@@ -40,7 +40,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls,
   HTTPSend, blcksock, strUtils, Dialogs, md5, IpUtils, AbGzTyp,
-  AbUtils, ssl_openssl;
+  AbUtils, ssl_openssl, dnssend, synamisc;
 
 type
   TDownloadThread = class(TThread)
@@ -84,6 +84,8 @@ type
     tAppFolder: string;
     tCachedFile: string;
     tCookies: string;
+    tUseExtendedInfo: Boolean;
+    tExtendedInfo: TStringList;
   end;
 
 implementation
@@ -106,7 +108,15 @@ begin
 end;
 
 procedure TDownloadThread.UpdateHeaders;
+
 begin
+  if tUseExtendedInfo then
+  begin
+    tExtendedInfo.Text := '=========================' + #13#10 + 'Server IP(s):' +
+      #13#10 + tExtendedInfo.Text + #13#10 + '=========================' + #13#10
+      + 'HTTP headers: ' + #13#10 + #13#10;
+    tHeaders.Text := tExtendedInfo.Text + tHeaders.Text;
+  end;
   frmMain.mmHTTP.Lines.AddStrings(tHeaders);
   //frmMain.mmHTTP.Lines.Add(TraceRouteHost(tURL));
   frmMain.AddToLog('====================', nil);
@@ -186,16 +196,24 @@ var
   aGz: TAbGzipStreamHelper;
   aType: TAbArchiveType;
   oGZ: TMemoryStream;
+  bs: TBlockSocket;
 begin
   //prototype
   tHeaders := TStringList.Create;
   uCookies := TStringList.Create;
+  tExtendedInfo := TStringList.Create;
   tDocument := TMemoryStream.Create;
   tDownloaded := 0;
   uHTTPStatus := 0;
   uStrHTTPStatus := '';
   if tURL <> '' then
   begin
+    if tUseExtendedInfo then
+    begin
+      bs := TBlockSocket.Create;
+      bs.ResolveNameToIP(tURL, tExtendedInfo);
+      bs.Free;
+    end;
     file_name := '';
     tDownloaded := 0;
     tContentLength := 0;
@@ -361,6 +379,7 @@ begin
   uCookies.Free;
   tHeaders.Free;
   tDocument.Free;
+  tExtendedInfo.Free;
 end;
 
 end.
