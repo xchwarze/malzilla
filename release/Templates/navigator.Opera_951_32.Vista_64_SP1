@@ -1,0 +1,17 @@
+function my_navigator () {
+this.appCodeName = "Mozilla";
+this.appMinorVersion = "";
+this.appName = "Opera";
+this.appVersion = "9.51 (Windows NT 6.0; U; en)";
+this.browserLanguage = "en";
+this.cookieEnabled = "true";
+this.cpuClass = "undefined";
+this.onLine = "true";
+this.platform = "Win32";
+this.systemLanguage = "undefined";
+this.userAgent = "Opera/9.51 (Windows NT 6.0; U; en)";
+this.userLanguage = "en";
+};
+
+navigator = new my_navigator;
+

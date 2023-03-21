@@ -1,0 +1,120 @@
+//LuckySploit template by Antnet
+
+document.cookie = malzilla.document.cookie; //or put your own cookie string instead of Malzilla's one
+
+IDarray = new Array;
+
+function output(arg){
+  document.writeln("-- " + arg);
+}
+
+function element(ID, innerHTML){
+  this.elemType = "";
+  this.innerHTML = innerHTML;
+  this.attr1 = "";
+  this.attr2 = "";
+
+  this.setAttribute = function(attr1, attr2)
+  {
+    this.attr1 = attr1;
+    this.attr2 = attr2;
+    output(this.elemType + ".setAttribute( " + attr1 + " , " + attr2 + " )");
+  }
+  this.CreateObject = function(objType){
+    output(this.elemType + ".CreateObject( " + objType + " )");
+    return new ActiveXObject(objType);
+  }
+  this.GetObject = function(objType){
+    output(this.elemType + ".GetObject( " + objType + " )");
+    return new ActiveXObject(objType);
+  }
+  IDarray[ID] = this;
+};
+
+document.createElement = function(elemType){
+  output("createElement( " + elemType + " )");
+  elem = new element("tempID", "");
+  elem.elemType = elemType;
+
+  elem.watch("innerHTML",
+    function(prop, oldval, newval){
+      output(elem.elemType + "." + prop + "= " + newval)
+      return newval
+    }
+  )
+  return elem;
+}
+
+document.getElementById = function(ID){
+  return IDarray[ID];
+};
+
+function location () {
+  this.href = "";
+};
+
+document.location = new location;
+
+document.location.watch("href",
+function(prop, oldval, newval){
+  output( "location." + prop + "= " + newval)
+    return newval
+  }
+)
+
+function ActiveXObject(axName){
+  output("ActiveXObject( " + axName + " )");
+  this.axName = axName;
+  this.responseBody = "response body";
+  this.Type = 1;
+  this.Mode = 0;
+  this.SnapshotPath = "";
+
+  this.PrintSnapshot = function(){
+    output(this.axName + ".SnapshotPath( " + this.SnapshotPath + " )")
+  }
+  this.GetVariable = function(varName){
+    output(this.axName + ".GetVariable( " + varName + " )");
+    return "9,0,0,0"; // SWF version
+  }
+  this.GetVersions = function(){
+    output(this.axName + ".GetVersions()");
+    return "7=0=0=0"; // PDF version
+  }
+  this.open = function(oper, param){
+    output(this.axName + ".open( " + oper + " , " + param + " )");
+    return this;
+  }
+  this.send = function(data){
+    output(this.axName + ".send( " + data + " )");
+  }
+  this.Open = function(){
+    output(this.axName + ".Open()");
+  }
+  this.Close = function(){
+    output(this.axName + ".Close()");
+  }
+  this.Write = function(data){
+    output(this.axName + ".Write( " + data + " )");
+  }
+  this.SaveToFile = function(file, mode){
+    output(this.axName + ".SaveToFile( " + file + " )");
+  }
+  this.Run = function(data){
+    output(this.axName + ".Run( " + data + " )");
+  }
+  this.ShellExecute = function(data){
+    output(this.axName + ".ShellExecute( " + data + " )");
+  }
+}
+
+function Image(){
+  this.src = "";
+  this.height = 59;
+}
+
+function setTimeout(){}
+function clearInterval(){}
+function setInterval(){}
+
+//place Kalimero output under this line

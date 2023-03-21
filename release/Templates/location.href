@@ -1,0 +1,4 @@
+function my_location () {
+this.href = "malzilla.location.href";
+};
+location = new my_location;

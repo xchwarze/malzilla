@@ -1,0 +1,17 @@
+function my_navigator () {
+this.appCodeName = "Mozilla";
+this.appMinorVersion = ";SP2;";
+this.appName = "Microsoft Internet Explorer";
+this.appVersion = "4.0 (compatible; MSIE 6.0; Windows NT 5.1; .NET CLR 1.1.4322; InfoPath.1; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30)";
+this.browserLanguage = "en-us";
+this.cookieEnabled = "true";
+this.cpuClass = "x86";
+this.onLine = "true";
+this.platform = "Win32";
+this.systemLanguage = "en-gb";
+this.userAgent = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; .NET CLR 1.1.4322; InfoPath.1; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30)";
+this.userLanguage = "en-gb";
+};
+
+navigator = new my_navigator;
+

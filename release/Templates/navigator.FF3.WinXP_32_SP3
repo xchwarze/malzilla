@@ -1,0 +1,17 @@
+function my_navigator () {
+this.appCodeName = "Mozilla";
+this.appMinorVersion = "undefined";
+this.appName = "Netscape";
+this.appVersion = "5.0 (Windows; en-US)";
+this.browserLanguage = "undefined";
+this.cookieEnabled = "true";
+this.cpuClass = "undefined";
+this.onLine = "true";
+this.platform = "Win32";
+this.systemLanguage = "undefined";
+this.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+this.userLanguage = "undefined";
+};
+
+navigator = new my_navigator;
+
